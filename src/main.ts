@@ -1,4 +1,5 @@
 import "./styles/main.css";
+import "./styles/windows.css";
 import {
   renderStartupFailure,
   startAfterboot,
