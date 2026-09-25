@@ -584,3 +584,99 @@ Confirm the small-screen window policy, keyboard move/resize interaction, initia
 ### 4. Sufficiency of the M1 Architecture
 
 The M1 architecture is sufficient for M2: typed synchronous events, explicit disposables, injected clock, composition-root wiring, immutable snapshots, and DOM-independent runtime state are the right foundations. One specific adjustment is necessary: split the ready-state desktop projection out of `ShellView` and add dedicated application/window services plus a window DOM adapter. `ShadowRuntime` should not own M2 state, and no broad framework rewrite, global store, or new external dependency is justified.
+
+---
+
+# Milestone 2 Implementation Session
+
+- **Date:** 2026-09-26
+- **Branch:** `feature/m2-windows-applications`
+- **Starting commit:** `51d43d68b6b75644fd85abdc322ad3048a9c6d43`
+- **Implementation commit:** `116f01f6e495639f55372588b3981e68a99badcf`
+- **Purpose:** Implement the M2 window and application framework from the approved architecture review and locked interaction decisions.
+- **Completion status:** Implemented and locally verified — formal milestone review and CI verification pending
+
+## Documentation Reviewed
+
+- `README.md`
+- `CHANGELOG.md`
+- `docs/AFTERBOOT_PROJECT.md`
+- `docs/SESSION_RESULTS.md`
+- canonical `docs/AFTERBOOT_MILESTONES.md` from `origin/documentation`, read without switching branches because the file is not present on this feature branch
+
+## Implementation Summary
+
+- Added branded application, application-instance, and window identities with injectable deterministic generation.
+- Added serializable immutable window snapshots and a DOM-independent `WindowManager`.
+- Implemented centered first-window placement and centralized deterministic cascade offsets.
+- Implemented focus/z-order, constrained move/resize, minimize, maximize, restore, close, work-area updates, reset, disposal, and typed window facts.
+- Added immutable startup-only application registration with explicit duplicate and unknown-application errors.
+- Added a single-instance `ApplicationManager` that owns running instances, primary/auxiliary window relationships, view resolution, close semantics, reset, and exactly-once disposal.
+- Added a narrow application contract using `mount(host, document): Disposable` plus a scoped auxiliary-window request.
+- Added the minimal System Diagnostics proof application. Relaunch focuses/restores its existing primary window; the app can open auxiliary lifecycle-detail windows to prove simultaneous-window behavior without multi-instance support.
+- Extracted the ready desktop from `ShellView` into a disposable `DesktopView`.
+- Added a stable-ID `WindowLayerView` that reconciles existing DOM nodes, mounts each application view once, projects domain state, and translates pointer/focus/chrome interaction into commands.
+- Added desktop pointer dragging/resizing, accessible minimize/maximize/restore/close controls, launcher and task-strip keyboard navigation, and deterministic focus recovery after minimize/close.
+- Added responsive active-window presentation for small screens while preserving independent domain geometry and all window state.
+- Wired runtime reset/failure and application/window disposal through the existing composition root without adding M2 state to `ShadowRuntime`.
+
+## Important Architectural Decisions
+
+- `ShadowRuntime` remains the authority only for boot/reset/failure lifecycle.
+- `WindowManager` is the only owner of window geometry, mode, focus order, active identity, and work-area constraints.
+- `ApplicationRegistry` is immutable after startup; no installation/uninstallation API was added.
+- Every M2 application is single-instance. Relaunching restores or focuses the existing primary window.
+- One application instance may own auxiliary windows. This reconciles the locked single-instance policy with the milestone requirement to prove simultaneous windows.
+- Closing an auxiliary window leaves the instance running; closing the primary window closes all owned windows and disposes the instance exactly once.
+- Move and resize are pointer interactions only. Keyboard users can launch, focus, restore, minimize, maximize, and close through native buttons and the task strip.
+- No global Alt+Tab-style shortcut or keyboard move/resize mode was added.
+- Small screens render only the active window as the full available work area; inactive windows remain in domain state and can be selected through the task strip.
+- Application view objects remain private lifecycle handles. DOM nodes, callbacks, and pointer state never enter application/window snapshots.
+
+## Tests Added
+
+- `tests/unit/window-manager.test.ts`: 10 tests for placement, focus/z-order, geometry, all modes, close, responsive work areas, events, reset, immutability, and invalid inputs.
+- `tests/unit/application-registry.test.ts`: 3 tests for immutable startup lookup and duplicate/unknown handling.
+- `tests/unit/application-manager.test.ts`: 6 tests for launch, single-instance enforcement, auxiliary windows, primary close/disposal, reset, and unknown ownership.
+- `tests/integration/application-window-lifecycle.test.ts`: service-level registration -> launch -> multiple windows -> relaunch -> close/dispose workflow.
+- `tests/e2e/windows-applications.spec.ts`: 6 Chromium workflows for launch, simultaneous windows/focus, pointer drag/resize, minimize/maximize/restore/close, keyboard controls, mobile presentation, reset, console errors, and failed requests.
+
+Existing M1 unit, integration, and Playwright tests remain unchanged and pass as regression coverage.
+
+## Verification
+
+- Prettier formatting check: passed.
+- Strict TypeScript typecheck: passed.
+- ESLint: passed.
+- Vitest: 34 tests passed across 8 files.
+- Production Vite build: passed.
+- Playwright Chromium: 13 tests passed.
+- Desktop visual inspection with two simultaneous windows: passed.
+- Mobile 360 x 740 visual inspection with active-window fill and task switching: passed.
+- Keyboard launch, focus, task restore, and window controls: passed.
+- Console errors, page errors, and failed requests in M2 workflows: none.
+- Reset with open primary/auxiliary windows returns to a clean second boot cycle without page reload: passed.
+
+## Deviations From the Architecture Review
+
+- The review left launch policy extensibility open; the locked implementation decision requires all M2 applications to be single-instance, so no policy enum or multi-instance path was added.
+- The review recommended deciding keyboard move/resize and global focus cycling; the locked implementation explicitly excludes both from M2.
+- The review proposed a broader application context as a possibility. The implementation uses only application/instance identity and a scoped auxiliary-window request because no other M2 capability is required.
+- The planned separate viewport adapter was unnecessary. `WindowLayerView` translates browser resize measurements into `WindowManager.setWorkArea` commands while the manager remains the state authority.
+
+## Known Limitations
+
+- M2 provides one built-in diagnostic application only.
+- Application registration is fixed at startup.
+- Applications are single-instance and have one lifecycle-owning primary window.
+- Window dragging and resizing use pointer input on floating desktop layouts only.
+- Small-screen mode intentionally suppresses floating geometry and presents only the active window.
+- Firefox, WebKit, and a formal assistive-technology matrix were not run locally; Chromium is the configured automated browser baseline.
+- The canonical milestone checklist exists on `origin/documentation`, not this branch, so its formal completion record was not changed here.
+- Remote CI and formal project-owner milestone approval remain pending; M2 is not yet declared complete.
+
+## Scope Review
+
+No virtual filesystem, file manager, text editor, terminal, process/task simulation, notifications, settings, persistence, accounts, networking, scenarios, backend, real machine access, dynamic application installation, multi-instance policy, global window-cycling shortcut, or keyboard move/resize behavior was introduced.
+
+No release, version tag, GitHub Release, PR, merge, or branch change was created.

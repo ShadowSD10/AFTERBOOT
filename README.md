@@ -8,11 +8,11 @@ The product relationship is:
 AFTERBOOT → SHADOW OS → applications and scenarios
 ```
 
-AFTERBOOT is the host experience. SHADOW OS is the fictional operating system it will simulate. Applications, sandbox systems, and investigation scenarios will eventually operate inside SHADOW OS through shared OS services. Those systems are roadmap work and are not part of the current implementation.
+AFTERBOOT is the host experience. SHADOW OS is the fictional operating system it simulates. The current implementation includes the first reusable application and window framework; filesystem, broader sandbox, and scenario systems remain roadmap work.
 
 ## Current Status
 
-Milestone 0 — Foundation has been implemented and locally verified. AFTERBOOT is in active development and remains pre-v1.0. No `v0.1.0` release has been created yet.
+Milestone 2 — Windows and Applications has been implemented and locally verified. Formal milestone review and CI verification remain pending. AFTERBOOT is in active development and remains pre-v1.0. No `v0.1.0` release has been created yet.
 
 The current implementation provides:
 
@@ -20,9 +20,14 @@ The current implementation provides:
 - Vanilla TypeScript using standard DOM APIs and CSS
 - ESLint, Prettier, Vitest, and Playwright infrastructure
 - Continuous integration and GitHub Pages deployment workflows
-- A minimal responsive AFTERBOOT / SHADOW OS preparation surface
+- A deterministic boot/reset runtime and responsive SHADOW OS desktop shell
+- A DOM-independent window manager with focus, movement, resize, minimize, maximize, restore, and close transitions
+- A startup-only application registry and single-instance application lifecycle
+- Pointer-driven floating windows on desktop and active-window presentation on small screens
+- Keyboard-accessible launch, focus, task restore, and window controls
+- A minimal System Diagnostics application that proves application and multi-window lifecycle behavior
 
-The full SHADOW OS runtime and desktop do not exist yet.
+The virtual filesystem, proof file applications, broader sandbox services, and scenarios do not exist yet.
 
 ## Project Direction
 
