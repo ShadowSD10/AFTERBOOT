@@ -111,7 +111,7 @@ When work progresses:
 
 ## Milestone 1 — Runtime and Boot Shell
 
-**Status:** 🔵 Ready for verification — implementation is ready for final milestone review
+**Status:** 🔵 Ready for final review
 **Purpose:** Introduce the first SHADOW OS runtime lifecycle, an accessible boot experience, and a basic responsive desktop shell without implementing windows, applications, filesystems, processes, or scenarios.  
 **Dependencies/prerequisites:** Milestone 0 must remain complete and all foundation quality gates must pass.
 
@@ -368,7 +368,6 @@ These items come from unresolved or deliberately flexible areas in the project s
 
 ### Milestone 1 and shell
 
-- What duration and presentation should the initial boot sequence use?
 - Is audio part of the initial boot experience, and how should autoplay restrictions be handled?
 - What formal accessibility target and browser/assistive-technology matrix will gate completion?
 - Which mobile/tablet interaction mode should the shell support?
@@ -395,12 +394,3 @@ These items come from unresolved or deliberately flexible areas in the project s
 - No milestone is currently assigned to `v0.1.0`, `v1.0.0`, or any other release automatically.
 - The exact milestone that will qualify as the first stable `v1.0.0` product release remains intentionally undecided.
 - Terminal support, persistence, search, community scenario packages, PWA support, and other future ideas remain optional unless promoted by a later explicit decision.
-
-## Observed Documentation Drift
-
-The live repository and production evidence supersede these stale statements, which should be corrected during a future documentation synchronization task:
-
-- `docs/AFTERBOOT_PROJECT.md` still says hosted workflow verification is pending and still names Milestone 0 as the immediate next step.
-- `README.md` still says remote GitHub Pages deployment has not been verified.
-
-This milestone document records the verified current state without changing those source documents as part of this checklist-only task.

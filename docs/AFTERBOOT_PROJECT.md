@@ -2,7 +2,7 @@
 
 > **Status:** Living architectural reference  
 > **Last updated:** 2026-09-26  
-> **Current stage:** Milestone 1 runtime and boot shell implemented and verified on its feature branch; final milestone review pending
+> **Current stage:** Milestone 0 and its hosted deployment are complete; Milestone 1 is implemented and ready for final review; Milestone 2 has not started
 
 ## Status vocabulary
 
@@ -465,9 +465,9 @@ Root-level `CHANGELOG.md` records notable changes under `[Unreleased]` until a r
 | A-005 | Decided  | TypeScript is the primary implementation language.                                      | Supports explicit contracts and safe evolution of interconnected systems.                                              |
 | A-006 | Decided  | Begin with vanilla TypeScript rather than a UI framework.                               | Avoids committing to framework abstractions before UI needs are understood. Reassess after the first substantial apps. |
 | A-007 | Decided  | Use Vite as the development/build tool.                                                 | Produces static assets, supports TypeScript well, and allows GitHub Pages base configuration.                          |
-| A-008 | Proposed | Use service-owned state plus typed events rather than a universal global store.         | Matches subsystem authority while keeping the first implementation small.                                              |
+| A-008 | Decided  | Use service-owned state plus typed events rather than a universal global store.         | Matches subsystem authority while keeping the first implementation small.                                              |
 | A-009 | Proposed | Start with an in-memory filesystem behind a storage-neutral interface.                  | Meets the no-persistence requirement while preserving a future persistence path.                                       |
-| A-010 | Proposed | Use one composition root and explicit dependency injection without a DI framework.      | Keeps construction understandable and tests easy to isolate.                                                           |
+| A-010 | Decided  | Use one composition root and explicit dependency injection without a DI framework.      | Keeps construction understandable and tests easy to isolate.                                                           |
 | A-011 | Proposed | Avoid URL-based in-OS navigation initially.                                             | The desktop is a stateful single experience and GitHub Pages has route fallback constraints.                           |
 | A-012 | Decided  | Scenario infrastructure is deferred until foundational OS contracts are proven.         | Prevents scenario needs from being guessed and baked into unstable systems.                                            |
 
@@ -511,4 +511,4 @@ Future features must preserve the static-runtime constraint unless the project's
 
 ## Immediate next step
 
-Implement **Milestone 0** as the smallest deployable foundation: initialize Vite with strict TypeScript and vanilla DOM/CSS, add CI/build/test configuration, render a minimal branded host surface, and verify that the production build works from a GitHub Pages repository subpath. Do not implement the window manager or full boot sequence in that step.
+Complete the final **Milestone 1** review using `docs/AFTERBOOT_MILESTONES.md` as the gate. Confirm the remaining `AFTERBOOT Build` evidence and decide whether approval requires a separate manual reduced-motion check. Do not begin Milestone 2 until the Milestone 1 Definition of Done is fully satisfied and approved.
