@@ -511,4 +511,4 @@ Future features must preserve the static-runtime constraint unless the project's
 
 ## Immediate next step
 
-Complete the final **Milestone 1** review using `docs/AFTERBOOT_MILESTONES.md` as the gate. Confirm the remaining `AFTERBOOT Build` evidence and decide whether approval requires a separate manual reduced-motion check. Do not begin Milestone 2 until the Milestone 1 Definition of Done is fully satisfied and approved.
+Complete the final **Milestone 1** review using `docs/AFTERBOOT_MILESTONES.md` as the gate and decide whether approval requires a separate manual reduced-motion check. Do not begin Milestone 2 until the Milestone 1 Definition of Done is fully satisfied and approved.

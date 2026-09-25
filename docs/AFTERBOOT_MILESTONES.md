@@ -145,7 +145,7 @@ When work progresses:
 - [x] Playwright verifies reduced-motion behavior.
 - [x] Playwright verifies reset without a page reload.
 - [x] Browser verification covers keyboard operation, supported desktop/mobile sizes, and unexpected console errors.
-- [ ] Typecheck, lint, formatting, unit/integration tests, production build, and browser tests pass locally and in `AFTERBOOT Build`.
+- [x] Typecheck, lint, formatting, unit/integration tests, production build, and browser tests pass locally and in `AFTERBOOT Build`.
 
 ### Definition of Done
 
@@ -155,7 +155,7 @@ When work progresses:
 - [x] Clock behavior is injectable and deterministic under test.
 - [x] Reset returns the runtime to a valid boot flow without reloading the page.
 - [x] Runtime state and required events have focused, typed contracts with no DOM coupling.
-- [ ] All Milestone 1 checks and required automated/browser verification pass.
+- [x] All Milestone 1 checks and required automated/browser verification pass.
 - [x] The production build passes and no known blocking issue remains.
 - [x] Scope review confirms that no Milestone 2 or later functionality was introduced.
 - [ ] Milestone 1 has been reviewed and approved before Milestone 2 begins.
@@ -164,9 +164,9 @@ When work progresses:
 
 - **Completion date:** Pending
 - **Implementation commit:** `76e7935da255055ab8289e62f3c4f6d7c7cc917c`
-- **Verification performed:** Local formatting, typecheck, ESLint, production build, Vitest, and Playwright passed. Project-owner browser verification passed for the normal boot, sequential stages, skip, reset, local clock/date accuracy, responsive desktop/mobile behavior, keyboard operation, and visual layout. Manual reduced-motion verification was not performed; automated reduced-motion Playwright coverage passed.
+- **Verification performed:** Local formatting, typecheck, ESLint, production build, Vitest, and Playwright passed. [`AFTERBOOT Build` run 36186067968](https://github.com/ShadowSD10/AFTERBOOT/actions/runs/36186067968) completed successfully for the implementation commit. Project-owner browser verification passed for the normal boot, sequential stages, skip, reset, local clock/date accuracy, responsive desktop/mobile behavior, keyboard operation, and visual layout. Manual reduced-motion verification was not performed; automated reduced-motion Playwright coverage passed.
 - **Test results:** 14 Vitest tests and 7 Playwright tests passed. Browser tests reported no console errors or failed requests.
-- **Remaining review:** Confirm the `AFTERBOOT Build` evidence required by the combined quality-gate checklist item, perform final milestone review and approval, and decide whether a manual reduced-motion check is required for approval.
+- **Remaining review:** Perform final milestone review and approval, including deciding whether a separate manual reduced-motion check is required for approval.
 - **Release/version:** None assigned
 
 ---

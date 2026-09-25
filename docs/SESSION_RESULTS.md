@@ -12,6 +12,7 @@
 - Formatting, strict TypeScript typecheck, ESLint, and the production build passed.
 - Vitest passed 14 unit/integration tests.
 - Playwright passed 7 Chromium tests.
+- [`AFTERBOOT Build` run 36186067968](https://github.com/ShadowSD10/AFTERBOOT/actions/runs/36186067968) completed successfully for implementation commit `76e7935da255055ab8289e62f3c4f6d7c7cc917c`.
 - Playwright covered staged startup, accessible skip, reduced-motion progression, reset without reload, browser-local clock output, and desktop/mobile layouts.
 - Browser tests reported no console errors or failed network requests.
 
@@ -23,7 +24,6 @@ Manual reduced-motion verification was intentionally not performed. Reduced-moti
 
 ### Remaining Review
 
-- Confirm the `AFTERBOOT Build` evidence required by the combined Milestone 1 quality-gate checklist item.
 - Decide whether final approval requires a separate manual reduced-motion check.
 - Complete final milestone review and approval before Milestone 2 begins.
 
