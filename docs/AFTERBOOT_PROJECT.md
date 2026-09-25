@@ -2,7 +2,7 @@
 
 > **Status:** Living architectural reference  
 > **Last updated:** 2026-09-26  
-> **Current stage:** Milestones 0 and 1 are complete; Milestone 2 is next and has not started
+> **Current stage:** Milestones 0, 1, and 2 are complete; Milestone 3 is next. The verified M2 feature branch has not yet been merged into `develop`
 
 ## Status vocabulary
 
@@ -144,6 +144,8 @@ A single composition root should construct services, register applications, seed
 
 Milestone 1 established this pattern for the lifecycle slice: the composition root injects a clock into the DOM-independent runtime, isolates browser time and motion queries behind platform adapters, and mounts the shell as a disposable projection of runtime snapshots. Boot progression is an explicit ordered stage model owned by the runtime, with one cancellable scheduled transition at a time; the shell only projects the current stage. Skip, reset, failure, and disposal cancel pending boot work before changing lifecycle state.
 
+Milestone 2 extends the same pattern: the composition root constructs a startup-only application registry, application manager, and DOM-independent window manager. A disposable desktop view projects their snapshots, while a window-layer adapter owns stable DOM reconciliation and pointer capture. Application views receive only a host element and `Document` through a small mount/dispose contract. M2 applications are single-instance; one instance may own a primary window plus scoped auxiliary windows.
+
 ### State model
 
 Each service owns its domain state and offers:
@@ -170,14 +172,14 @@ No UI technology is permanently mandated at this stage.
 
 | Subsystem                  | Status                  | Purpose                                                                                                           |
 | -------------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Bootstrap/composition root | Implemented (M1 base)   | Builds the runtime, injects adapters, seeds initial data, registers applications, and starts SHADOW OS.           |
+| Bootstrap/composition root | Implemented (M2 base)   | Builds the runtime, injects adapters, registers applications, composes windows, and starts SHADOW OS.             |
 | OS runtime                 | Implemented (M1 base)   | Coordinates lifecycle and cross-service workflows without becoming a general-purpose god object.                  |
 | Event system               | Implemented (M1 base)   | Provides typed, synchronous domain notifications with explicit subscription disposal.                             |
-| Window manager             | Proposed                | Owns windows, focus order, geometry, modes, and lifecycle transitions.                                            |
-| Application framework      | Proposed                | Defines app manifests, registration, launch requests, instances, and access to approved OS services.              |
+| Window manager             | Implemented (M2 base)   | Owns windows, focus order, geometry, modes, constraints, and lifecycle transitions.                               |
+| Application framework      | Implemented (M2 base)   | Defines immutable startup manifests, launch requests, single instances, scoped windows, and disposal.             |
 | Virtual filesystem         | Proposed                | Owns paths, nodes, file contents, metadata, directory operations, and filesystem events.                          |
 | Process/task service       | Proposed, later Phase 1 | Tracks running application instances and simulated system tasks; it does not represent real browser/OS processes. |
-| Shell                      | Partial (M1 boot shell) | Renders desktop surfaces, task area, launcher, notifications, context menus, and global keyboard/focus behavior.  |
+| Shell                      | Partial (M2 shell)      | Renders boot/desktop surfaces, launcher, task strip, application windows, and keyboard/pointer focus behavior.    |
 | Settings/configuration     | Proposed                | Stores typed runtime preferences and system configuration, initially in memory.                                   |
 | Notifications              | Proposed                | Accepts structured notifications and manages their visible lifecycle.                                             |
 | Search                     | Future idea             | Queries indexed resources through provider interfaces rather than knowing every subsystem.                        |
@@ -353,14 +355,14 @@ Keep tests near modules if that proves easier to maintain; the exact test layout
 
 ### Milestone 2 — windows and applications
 
-**Status:** Not started. This is the next milestone.
+**Status:** Complete as of 2026-09-26. Implemented, locally verified, manually accepted for desktop behavior, and pushed on `feature/m2-windows-applications`; not yet merged into `develop`.
 
 - Implement window state transitions independently of the DOM.
 - Add focus, movement, resize, minimize, maximize, restore, and close behavior.
 - Define the application registry and application context.
 - Build one diagnostic/sample app to exercise lifecycle behavior.
 
-**Exit criterion:** Multiple app instances can be operated through pointer and keyboard input with tested state transitions.
+**Exit criterion:** Multiple application windows can be operated through pointer input and keyboard-accessible controls with tested state transitions. M2 applications are single-instance; the diagnostic instance proves simultaneous primary and auxiliary windows.
 
 ### Milestone 3 — virtual filesystem and proof applications
 
@@ -480,7 +482,7 @@ When a proposed decision is implemented and validated, change its status to **De
 These questions should be answered near the milestone where they matter:
 
 1. Which mobile/tablet interaction modes and layouts will be officially supported by the interactive shell?
-2. Should small screens show freely resizable windows, constrained/snap layouts, or a single-window mode?
+2. Should later milestones broaden small-screen behavior beyond M2's functional active-window presentation?
 3. What visual and audio identity should distinguish SHADOW OS without imitating a real OS?
 4. Does the initial filesystem need permissions, ownership, timestamps, links, mounts, or only files/directories and basic metadata?
 5. Should file contents be strings/JSON initially, or should binary blobs be supported from the first filesystem version?
@@ -513,4 +515,4 @@ Future features must preserve the static-runtime constraint unless the project's
 
 ## Immediate next step
 
-Begin **Milestone 2** planning from its not-started checklist in `docs/AFTERBOOT_MILESTONES.md`. Milestone 1 is complete; no Milestone 2 implementation has started.
+Integrate the verified M2 feature branch into `develop` through the normal project workflow, then begin **Milestone 3 — Virtual Filesystem and Proof Applications** from its not-started checklist in `docs/AFTERBOOT_MILESTONES.md`. No merge, release, or version tag was created during M2 documentation closure.

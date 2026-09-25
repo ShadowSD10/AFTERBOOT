@@ -110,3 +110,77 @@ Use a dedicated public `AFTERBOOT-staging` repository and deploy `develop` there
 ### Investigation Scope
 
 No files, workflows, GitHub Pages settings, commits, branches, tags, releases, or deployments were changed during this investigation.
+
+---
+
+## Milestone 2 Final Verification and Documentation Synchronization
+
+- **Date:** 2026-09-26
+- **Implementation branch:** `feature/m2-windows-applications`
+- **Architecture review commit:** `51d43d68b6b75644fd85abdc322ad3048a9c6d43`
+- **Implementation commit:** `116f01f6e495639f55372588b3981e68a99badcf`
+- **Verified feature head:** `b042dc55f0f1417c049019b3bac2c97a3767b1d8`
+- **Completion status:** Complete; feature branch verified and pushed, documentation synchronized separately
+
+### Scope Verification
+
+The complete feature branch was reviewed against `origin/develop`, whose comparison base was `92e4db8409a131eb7e8b5edb1e3085a452031b06`.
+
+Verified M2 behavior includes:
+
+- serializable DOM-independent window state and a single owning window manager;
+- immutable startup-only application registration;
+- single-instance launch, focus-existing behavior, lifecycle, primary-window ownership, and disposal;
+- stable application-instance and window identities;
+- centered first-window placement and deterministic cascading placement;
+- focus and z-order management;
+- pointer dragging and resizing with geometry constraints;
+- minimize, maximize, restore, close, and deterministic focus recovery;
+- desktop floating windows and functional active-window small-screen presentation;
+- keyboard-accessible launcher, task strip, focus, and window controls;
+- one minimal System Diagnostics proof application with scoped auxiliary windows;
+- reset and disposal cleanup without a page reload; and
+- focused unit, integration, and browser coverage.
+
+The review found no virtual filesystem, file manager, text editor, terminal, simulated process service, persistence, accounts, networking, scenarios, backend, real filesystem/machine access, dynamic application installation, multi-instance applications, Alt+Tab-style shortcut, keyboard move/resize, or feature-heavy proof application.
+
+### Architectural Decisions Verified
+
+- Window and application lifecycle state remains independent from the DOM.
+- `WindowManager` owns window geometry, modes, focus order, and constraints.
+- `ApplicationRegistry` is fixed at startup.
+- `ApplicationManager` enforces one instance per application and disposes the instance when its primary window closes.
+- An application instance may own scoped auxiliary windows without becoming multi-instance.
+- Application views use the narrow `mount(host, document): Disposable` contract.
+- Pointer capture and responsive presentation remain UI-adapter concerns.
+- M2 intentionally excludes global window-cycling shortcuts and keyboard movement/resizing.
+
+### Automated Verification
+
+- Prettier: passed.
+- Strict TypeScript typecheck: passed.
+- ESLint: passed.
+- Vitest: 34 tests passed across 8 files.
+- Production Vite build: passed.
+- Playwright Chromium: 13 tests passed.
+- M2 browser workflows reported no console errors, page errors, or failed requests.
+- The complete branch diff passed whitespace and generated-artifact review.
+
+### Browser and Manual Verification
+
+Desktop behavior with two simultaneous diagnostic windows was manually inspected and accepted. Floating placement, focus distinction, launcher/task controls, drag/resize, and window chrome remained coherent without overlap blocking normal use.
+
+The 360 × 740 presentation was inspected and exercised successfully. The active window fills the available work area, inactive windows retain state, task controls permit switching, and horizontal overflow was absent. Mobile presentation is functional and supported as a fallback, but it is not a primary UX target for M2.
+
+### Feature Branch Result
+
+- `feature/m2-windows-applications` was pushed to `origin/feature/m2-windows-applications`.
+- Local and remote feature SHAs matched at `b042dc55f0f1417c049019b3bac2c97a3767b1d8` after push.
+- The feature worktree was clean, with no generated artifacts, screenshots, debug files, or temporary files tracked or untracked.
+- M2 has not been merged into `develop`.
+
+### Completion and Next Milestone
+
+Milestone 2 is complete. Milestone 3 — Virtual Filesystem and Proof Applications is next after the verified M2 branch is integrated through the normal project workflow.
+
+No pull request, merge, release, version tag, GitHub Release, or deployment was created during final verification and documentation synchronization.

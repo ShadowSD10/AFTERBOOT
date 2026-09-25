@@ -2,7 +2,7 @@
 
 > **Document type:** Living implementation gate  
 > **Last reviewed:** 2026-09-26  
-> **Current milestone:** Milestone 2 — Windows and Applications (not started)
+> **Current milestone:** Milestone 3 — Virtual Filesystem and Proof Applications (not started)
 > **Production branch:** `main`  
 > **Development branch:** `develop`  
 > **Release status:** Pre-v1.0; `v0.1.0` has not been created
@@ -173,48 +173,51 @@ When work progresses:
 
 ## Milestone 2 — Windows and Applications
 
-**Status:** ⬜ Not started  
-**Purpose:** Establish DOM-independent window behavior and the application framework needed to run multiple application instances coherently.  
+**Status:** ✅ Complete
+**Purpose:** Establish DOM-independent window behavior and the application framework needed to run application windows coherently.
 **Dependencies/prerequisites:** Milestone 1 must be `✅ Complete`; runtime lifecycle and desktop shell contracts must be stable enough to host windows.
 
 ### Scope and implementation requirements
 
-- [ ] Define serializable window state with stable identity, owner, title, bounds, mode, focus order, and constraints.
-- [ ] Implement open, focus, move, resize, minimize, maximize, restore, and close state transitions.
-- [ ] Keep window state and geometry rules independent from DOM elements.
-- [ ] Add pointer and keyboard adapters for window interaction.
-- [ ] Define immutable application manifests and an application registry.
-- [ ] Define application instance identity and lifecycle/disposal behavior.
-- [ ] Provide applications only the approved runtime/application context.
-- [ ] Support multiple application windows or instances according to declared launch policy.
-- [ ] Build one diagnostic/sample application that exercises application and window lifecycle behavior.
-- [ ] Preserve responsive and accessible shell behavior.
+- [x] Define serializable window state with stable identity, owner, title, bounds, mode, focus order, and constraints.
+- [x] Implement open, focus, move, resize, minimize, maximize, restore, and close state transitions.
+- [x] Keep window state and geometry rules independent from DOM elements.
+- [x] Add pointer and keyboard adapters for window interaction.
+- [x] Define immutable application manifests and an application registry.
+- [x] Define application instance identity and lifecycle/disposal behavior.
+- [x] Provide applications only the approved runtime/application context.
+- [x] Support multiple application windows according to the initial single-instance launch policy.
+- [x] Build one diagnostic/sample application that exercises application and window lifecycle behavior.
+- [x] Preserve responsive and accessible shell behavior.
 
 ### Required tests and verification
 
-- [ ] Unit tests cover every window state transition and invalid transition.
-- [ ] Unit tests cover geometry constraints and focus ordering.
-- [ ] Unit tests cover application registration, duplicate handling, launch policy, lifecycle, and disposal.
-- [ ] Integration tests cover launch → application instance → window → close workflows without private cross-module coupling.
-- [ ] Playwright verifies multiple windows, focus, movement, resize, minimize, maximize, restore, and close.
-- [ ] Playwright verifies critical keyboard-only paths and supported responsive layouts.
-- [ ] Typecheck, lint, formatting, tests, production build, and browser verification pass.
+- [x] Unit tests cover every window state transition and invalid transition.
+- [x] Unit tests cover geometry constraints and focus ordering.
+- [x] Unit tests cover application registration, duplicate handling, launch policy, lifecycle, and disposal.
+- [x] Integration tests cover launch → application instance → window → close workflows without private cross-module coupling.
+- [x] Playwright verifies multiple windows, focus, movement, resize, minimize, maximize, restore, and close.
+- [x] Playwright verifies critical keyboard-only paths and supported responsive layouts.
+- [x] Typecheck, lint, formatting, tests, production build, and browser verification pass.
 
 ### Definition of Done
 
-- [ ] Multiple application instances can be operated predictably through pointer and keyboard input.
-- [ ] Window and application lifecycle state remains independent from rendered DOM state.
-- [ ] The sample application proves the public application context without introducing application-specific core behavior.
-- [ ] All Milestone 2 checks and required automated/browser verification pass.
-- [ ] The production build passes and no known blocking issue remains.
-- [ ] Scope review confirms that filesystem and scenario behavior were not introduced prematurely.
-- [ ] Milestone 2 has been reviewed and approved before Milestone 3 begins.
+- [x] Multiple application windows can be operated predictably through pointer input and keyboard-accessible controls.
+- [x] Window and application lifecycle state remains independent from rendered DOM state.
+- [x] The sample application proves the public application context without introducing application-specific core behavior.
+- [x] All Milestone 2 checks and required automated/browser verification pass.
+- [x] The production build passes and no known blocking issue remains.
+- [x] Scope review confirms that filesystem and scenario behavior were not introduced prematurely.
+- [x] Milestone 2 has been reviewed and approved before Milestone 3 begins.
 
 ### Completion record
 
-- **Completion date:** Pending
-- **Verification performed:** Pending
-- **Test results:** Pending
+- **Completion date:** 2026-09-26
+- **Implementation commit:** `116f01f6e495639f55372588b3981e68a99badcf`
+- **Verified feature head:** `b042dc55f0f1417c049019b3bac2c97a3767b1d8` on `feature/m2-windows-applications`
+- **Verification performed:** The complete feature branch was reviewed against `origin/develop`. Local formatting, strict TypeScript, ESLint, Vitest, production build, and Playwright passed. Desktop behavior with simultaneous windows was manually accepted. The 360 × 740 mobile presentation was verified as functional, while mobile remains a supported fallback rather than a primary UX target. Scope review found no premature filesystem, process, persistence, scenario, or other later-milestone behavior.
+- **Test results:** 34 Vitest tests and 13 Chromium Playwright tests passed. Browser workflows reported no console errors or failed requests.
+- **Integration status:** The verified feature branch was pushed to `origin/feature/m2-windows-applications`; M2 has not yet been merged into `develop`.
 - **Release/version:** None assigned
 
 ---
