@@ -1,14 +1,40 @@
-import { createInitialHostModel } from "./host-model";
-import { renderHost } from "./render-host";
+import { ShadowRuntime } from "../core/runtime/shadow-runtime";
+import { BrowserClock } from "../platform/browser-clock";
+import { prefersReducedMotion } from "../platform/motion-preference";
+import { ShellView } from "../shell/shell-view";
 
-export function startAfterboot(document: Document): void {
+const STANDARD_BOOT_DURATION_MS = 2_400;
+const REDUCED_MOTION_BOOT_DURATION_MS = 0;
+
+export interface AfterbootApplication {
+  readonly runtime: ShadowRuntime;
+  dispose(): void;
+}
+
+export function startAfterboot(document: Document, browserWindow: Window): AfterbootApplication {
   const root = document.querySelector<HTMLElement>("#app");
 
   if (!root) {
     throw new Error("AFTERBOOT host element was not found.");
   }
 
-  renderHost(root, createInitialHostModel());
+  const clock = new BrowserClock();
+  const reducedMotion = prefersReducedMotion(browserWindow);
+  const runtime = new ShadowRuntime(clock, {
+    bootDurationMs: reducedMotion ? REDUCED_MOTION_BOOT_DURATION_MS : STANDARD_BOOT_DURATION_MS,
+  });
+  const shellView = new ShellView(root, document, runtime, clock, reducedMotion);
+  const disposeShell = shellView.mount();
+
+  runtime.boot();
+
+  return {
+    runtime,
+    dispose(): void {
+      disposeShell();
+      runtime.dispose();
+    },
+  };
 }
 
 export function renderStartupFailure(document: Document): void {
