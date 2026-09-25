@@ -1,7 +1,13 @@
 import "./styles/main.css";
-import { renderStartupFailure, startAfterboot } from "./bootstrap/start-afterboot";
+import "./styles/windows.css";
+import {
+  renderStartupFailure,
+  startAfterboot,
+  type AfterbootApplication,
+} from "./bootstrap/start-afterboot";
 
 let startupHasFailed = false;
+let application: AfterbootApplication | null = null;
 
 function handleStartupFailure(error: unknown): void {
   if (startupHasFailed) {
@@ -10,14 +16,19 @@ function handleStartupFailure(error: unknown): void {
 
   startupHasFailed = true;
   console.error("AFTERBOOT startup failed.", error);
-  renderStartupFailure(document);
+
+  if (application) {
+    application.runtime.fail(error);
+  } else {
+    renderStartupFailure(document);
+  }
 }
 
 window.addEventListener("error", (event) => handleStartupFailure(event.error));
 window.addEventListener("unhandledrejection", (event) => handleStartupFailure(event.reason));
 
 try {
-  startAfterboot(document);
+  application = startAfterboot(document, window);
 } catch (error: unknown) {
   handleStartupFailure(error);
 }

@@ -1,0 +1,358 @@
+.desktop-shell {
+  height: 100vh;
+  min-height: 32rem;
+  padding: 1rem 1rem 0;
+  overflow: hidden;
+  background:
+    linear-gradient(115deg, transparent 64%, rgb(255 107 85 / 7%) 64%),
+    radial-gradient(circle at 18% 76%, rgb(143 240 189 / 8%), transparent 28%);
+}
+
+.desktop-shell__header {
+  min-height: 2rem;
+}
+
+.desktop-shell__ready {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.7rem;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.desktop-shell__workspace {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  border-inline: 1px solid var(--color-rule);
+  animation: desktop-enter 350ms ease-out both;
+}
+
+.desktop-shell__identity {
+  position: absolute;
+  z-index: 0;
+  top: 2rem;
+  left: 2rem;
+  pointer-events: none;
+}
+
+.desktop-shell__environment,
+.desktop-shell__description {
+  margin: 0;
+}
+
+.desktop-shell__wordmark {
+  margin: 0.35rem 0;
+  color: rgb(237 247 241 / 12%);
+  font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+  font-size: clamp(4rem, 12vw, 10rem);
+  line-height: 0.85;
+}
+
+.desktop-shell__description {
+  color: var(--color-muted);
+  font-size: 0.7rem;
+  letter-spacing: 0;
+}
+
+.window-layer {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  overflow: hidden;
+}
+
+.os-window {
+  position: absolute;
+  display: grid;
+  grid-template-rows: 2.75rem minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-rule-strong);
+  border-radius: 3px;
+  color: var(--color-ink);
+  background: #0c1214;
+  box-shadow: 0 1.25rem 3rem rgb(0 0 0 / 45%);
+}
+
+.os-window[hidden] {
+  display: none;
+}
+
+.os-window[data-active="true"] {
+  border-color: var(--color-signal);
+  box-shadow:
+    0 0 0 1px rgb(143 240 189 / 18%),
+    0 1.5rem 3.5rem rgb(0 0 0 / 55%);
+}
+
+.os-window__titlebar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  min-width: 0;
+  border-bottom: 1px solid var(--color-rule);
+  background: var(--color-panel-raised);
+  cursor: move;
+  user-select: none;
+  touch-action: none;
+}
+
+.os-window__title {
+  min-width: 0;
+  margin: 0;
+  padding-inline: 0.85rem;
+  overflow: hidden;
+  font-size: 0.75rem;
+  line-height: 1;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.os-window__controls {
+  display: flex;
+  align-self: stretch;
+}
+
+.os-window__control {
+  display: grid;
+  width: 2.75rem;
+  min-width: 2.75rem;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-left: 1px solid var(--color-rule);
+  border-radius: 0;
+  color: var(--color-muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.os-window__control--close:hover {
+  color: #fff;
+  background: var(--color-alert);
+}
+
+.os-window__content {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+.os-window__resize-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  cursor: nwse-resize;
+  touch-action: none;
+}
+
+.os-window__resize-handle::after {
+  position: absolute;
+  right: 0.25rem;
+  bottom: 0.25rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 1px solid var(--color-signal);
+  border-bottom: 1px solid var(--color-signal);
+  content: "";
+}
+
+.os-window[data-mode="maximized"] .os-window__titlebar {
+  cursor: default;
+}
+
+.os-window[data-mode="maximized"] .os-window__resize-handle {
+  display: none;
+}
+
+.desktop-shell__footer {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: 0.75rem;
+  min-height: 4rem;
+  padding: 0.6rem 0;
+}
+
+.application-launcher,
+.window-task-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.window-task-strip {
+  overflow-x: auto;
+}
+
+.application-launcher__label {
+  color: var(--color-signal);
+  font-size: 0.65rem;
+}
+
+.application-launcher__button,
+.window-task-strip__button,
+.diagnostics-app__action {
+  min-height: 2.5rem;
+  padding-inline: 0.85rem;
+  border: 1px solid var(--color-rule-strong);
+  border-radius: 2px;
+  color: var(--color-ink);
+  background: var(--color-panel);
+  cursor: pointer;
+}
+
+.window-task-strip__button {
+  max-width: 13rem;
+  overflow: hidden;
+  color: var(--color-muted);
+  font-size: 0.7rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.window-task-strip__button[data-active="true"] {
+  border-color: var(--color-signal);
+  color: var(--color-ink);
+}
+
+.window-task-strip__button[data-mode="minimized"] {
+  border-style: dashed;
+}
+
+.desktop-shell .system-clock {
+  display: grid;
+  min-width: 7rem;
+  padding: 0 0.75rem;
+  border: 0;
+  border-inline: 1px solid var(--color-rule);
+  justify-items: end;
+}
+
+.desktop-shell .system-clock__time {
+  margin: 0;
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.desktop-shell .system-clock__date {
+  margin: 0;
+  font-size: 0.65rem;
+}
+
+.diagnostics-app,
+.diagnostics-detail {
+  min-height: 100%;
+  padding: 1.5rem;
+  background: linear-gradient(90deg, rgb(143 240 189 / 4%) 1px, transparent 1px), #0c1214;
+  background-size: 2rem 2rem;
+}
+
+.diagnostics-app__title,
+.diagnostics-detail__title {
+  margin: 0;
+  font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+  font-size: 2.25rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.diagnostics-app__status,
+.diagnostics-detail__eyebrow {
+  margin: 0 0 0.75rem;
+  color: var(--color-signal);
+  font-size: 0.7rem;
+}
+
+.diagnostics-app__facts {
+  margin: 1.5rem 0;
+  border-top: 1px solid var(--color-rule);
+}
+
+.diagnostics-app__fact {
+  display: grid;
+  grid-template-columns: minmax(7rem, 0.7fr) minmax(0, 1fr);
+  gap: 1rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--color-rule);
+}
+
+.diagnostics-app__term,
+.diagnostics-app__value {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 0.75rem;
+}
+
+.diagnostics-app__term {
+  color: var(--color-muted);
+}
+
+.diagnostics-detail__copy {
+  max-width: 34rem;
+  color: var(--color-muted);
+  line-height: 1.7;
+}
+
+@media (max-width: 44rem) {
+  .desktop-shell {
+    min-height: 28rem;
+    padding: 0.75rem 0.75rem 0;
+  }
+
+  .desktop-shell__identity {
+    display: none;
+  }
+
+  .os-window {
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .os-window[data-active="false"] {
+    display: none;
+  }
+
+  .os-window__titlebar {
+    cursor: default;
+  }
+
+  .os-window__resize-handle {
+    display: none;
+  }
+
+  .desktop-shell__footer {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+  }
+
+  .application-launcher {
+    grid-column: 1;
+  }
+
+  .window-task-strip {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .desktop-shell .system-clock {
+    display: none;
+  }
+
+  .desktop-shell__reset {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
