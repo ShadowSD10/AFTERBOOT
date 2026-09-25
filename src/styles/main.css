@@ -7,11 +7,13 @@
   text-rendering: optimizeLegibility;
   --color-surface: #080b0c;
   --color-panel: #101719;
+  --color-panel-raised: #162023;
   --color-ink: #edf7f1;
   --color-muted: #8fa39b;
   --color-signal: #8ff0bd;
   --color-alert: #ff6b55;
   --color-rule: #31423c;
+  --color-rule-strong: #536a61;
   --space-page: clamp(1.25rem, 4vw, 3.5rem);
 }
 
@@ -36,34 +38,34 @@ body {
   background-size: 2.5rem 2.5rem;
 }
 
-button,
-input,
-textarea,
-select {
+button {
   font: inherit;
 }
 
-.host {
-  position: relative;
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-  min-height: 100vh;
-  padding: var(--space-page);
-  isolation: isolate;
+button:focus-visible {
+  outline: 2px solid var(--color-signal);
+  outline-offset: 0.25rem;
 }
 
-.host::before {
+button:hover {
+  border-color: var(--color-signal);
+  color: var(--color-ink);
+}
+
+.visually-hidden {
   position: absolute;
-  z-index: -1;
-  inset: 0;
-  border-left: 0.35rem solid var(--color-alert);
-  background: linear-gradient(112deg, transparent 58%, rgb(143 240 189 / 7%) 58%);
-  content: "";
-  pointer-events: none;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-.host__header,
-.host__footer {
+.system-header,
+.system-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -74,23 +76,29 @@ select {
   text-transform: uppercase;
 }
 
-.host__header {
+.system-header {
   padding-bottom: 1rem;
   border-bottom: 1px solid var(--color-rule);
 }
 
-.host__phase {
+.system-header__brand {
+  color: var(--color-ink);
+  font-weight: 700;
+}
+
+.system-header__state {
   color: var(--color-signal);
   text-align: right;
 }
 
-.host__identity {
-  align-self: center;
-  width: min(100%, 72rem);
-  padding-block: 4rem;
+.system-footer {
+  justify-content: flex-end;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-rule);
+  text-align: right;
 }
 
-.host__system-name {
+.system-mark {
   margin: 0 0 1rem;
   color: var(--color-signal);
   font-size: 0.875rem;
@@ -98,45 +106,319 @@ select {
   text-transform: uppercase;
 }
 
-.host h1 {
+.startup-screen,
+.runtime-failure {
+  display: grid;
+  min-height: 100vh;
+  place-content: center;
+  padding: 2rem;
+  text-align: center;
+}
+
+.startup-screen__title,
+.runtime-failure__title {
+  margin: 0;
+  font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+  font-size: 4rem;
+  font-weight: 400;
+  line-height: 0.95;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.startup-screen__state,
+.runtime-failure__message {
+  margin: 1.5rem 0 0;
+  color: var(--color-muted);
+  line-height: 1.6;
+}
+
+.power-on-screen,
+.firmware-screen {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  min-height: 100vh;
+  padding: var(--space-page);
+  color: #cbd6d1;
+  background: #010202;
+}
+
+.power-on-screen__signal {
+  align-self: center;
+  margin: 0;
+  color: #839189;
+  font-size: 0.7rem;
+  text-align: center;
+  text-transform: uppercase;
+  animation: signal-in 300ms 200ms both;
+}
+
+.power-on-screen__skip,
+.firmware-screen__skip {
+  justify-self: end;
+  min-height: 2.75rem;
+  padding-inline: 1rem;
+  border: 1px solid #26302c;
+  border-radius: 0;
+  color: #718078;
+  background: transparent;
+  cursor: pointer;
+}
+
+.firmware-screen__output {
+  align-self: start;
+  width: min(100%, 42rem);
+  padding-top: 2rem;
+}
+
+.firmware-screen__title,
+.firmware-screen__revision,
+.firmware-screen__status,
+.firmware-checks__row {
+  font-size: 0.8rem;
+  line-height: 1.65;
+  letter-spacing: 0;
+}
+
+.firmware-screen__title {
+  margin: 0;
+  color: var(--color-ink);
+  font-weight: 700;
+}
+
+.firmware-screen__revision {
+  margin: 0;
+  color: #839189;
+}
+
+.firmware-checks {
+  margin-top: 2rem;
+}
+
+.firmware-checks__row {
+  display: grid;
+  grid-template-columns: auto minmax(2rem, 1fr) auto;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.firmware-checks__leader {
+  overflow: hidden;
+  color: #3a4841;
+}
+
+.firmware-checks__state,
+.firmware-screen__status {
+  color: var(--color-signal);
+}
+
+.firmware-screen__status {
+  margin: 2rem 0 0;
+}
+
+.boot-screen,
+.desktop-shell {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: 100vh;
+  padding: var(--space-page);
+  isolation: isolate;
+}
+
+.boot-screen::before,
+.desktop-shell::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-left: 0.35rem solid var(--color-alert);
+  background: linear-gradient(112deg, transparent 58%, rgb(143 240 189 / 7%) 58%);
+  content: "";
+  pointer-events: none;
+}
+
+.boot-screen__content {
+  position: relative;
+  align-self: center;
+  width: min(100%, 68rem);
+  padding-block: 3rem;
+  overflow: hidden;
+}
+
+.boot-screen__content::after {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 45%;
+  height: 1px;
+  background: var(--color-signal);
+  box-shadow: 0 0 1rem rgb(143 240 189 / 60%);
+  content: "";
+  animation: boot-scan 1.5s ease-in-out infinite alternate;
+}
+
+.boot-screen__cycle,
+.desktop-shell__environment {
+  margin: 0 0 1rem;
+  color: var(--color-signal);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+.boot-screen__title,
+.desktop-shell__title {
   max-width: 100%;
   margin: 0;
   color: var(--color-ink);
   font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
-  font-size: clamp(3.4rem, 15vw, 11rem);
+  font-size: 7rem;
   font-weight: 400;
-  line-height: 0.82;
+  line-height: 0.86;
   letter-spacing: 0;
+  text-transform: uppercase;
   overflow-wrap: anywhere;
 }
 
-.host__status {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  width: fit-content;
-  max-width: 100%;
-  margin-top: clamp(2rem, 6vw, 4.5rem);
-  padding-top: 1rem;
-  border-top: 1px solid var(--color-rule);
+.boot-screen__status {
+  margin: 2rem 0 0;
   color: var(--color-muted);
   font-size: 0.875rem;
   line-height: 1.6;
 }
 
-.host__indicator {
-  flex: 0 0 auto;
-  width: 0.65rem;
-  height: 0.65rem;
-  background: var(--color-signal);
-  box-shadow: 0 0 1rem rgb(143 240 189 / 55%);
+.boot-diagnostics {
+  width: min(100%, 38rem);
+  margin-top: 2rem;
+  padding: 0;
+  border-top: 1px solid var(--color-rule);
+  list-style: none;
 }
 
-.host__footer {
-  justify-content: flex-end;
+.boot-diagnostics__row {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  min-height: 2.5rem;
+  border-bottom: 1px solid var(--color-rule);
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.boot-diagnostics__index {
+  color: var(--color-signal);
+}
+
+.boot-diagnostics__state {
+  text-align: right;
+}
+
+.boot-diagnostics__state--waiting {
+  color: #65756e;
+}
+
+.boot-diagnostics__state--initializing {
+  color: var(--color-ink);
+  animation: service-pulse 900ms ease-in-out infinite alternate;
+}
+
+.boot-diagnostics__state--ok {
+  color: var(--color-signal);
+}
+
+.boot-screen__skip,
+.desktop-shell__reset,
+.runtime-failure__reset {
+  min-height: 2.75rem;
+  border: 1px solid var(--color-rule-strong);
+  border-radius: 0;
+  color: var(--color-muted);
+  background: var(--color-panel);
+  cursor: pointer;
+}
+
+.boot-screen__skip {
+  margin-top: 2rem;
+  padding-inline: 1.25rem;
+}
+
+.desktop-shell {
+  background-image: linear-gradient(135deg, transparent 73%, rgb(255 107 85 / 5%) 73%);
+}
+
+.desktop-shell__workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4rem;
+  width: min(100%, 78rem);
+  padding-block: 3rem;
+  animation: desktop-enter 350ms ease-out both;
+}
+
+.desktop-shell__description {
+  max-width: 36rem;
+  margin: 1.75rem 0 0;
+  color: var(--color-muted);
+  line-height: 1.7;
+}
+
+.system-clock {
+  display: grid;
+  justify-items: end;
+  min-width: 17rem;
+  padding: 1.5rem 0 1.5rem 2rem;
+  border-left: 1px solid var(--color-rule-strong);
+}
+
+.system-clock__label {
+  color: var(--color-muted);
+  font-size: 0.7rem;
+}
+
+.system-clock__time {
+  margin-top: 0.5rem;
+  color: var(--color-signal);
+  font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+  font-size: 4rem;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.system-clock__date {
+  margin-top: 0.5rem;
+  color: var(--color-ink);
+  font-size: 0.875rem;
+}
+
+.desktop-shell__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   padding-top: 1rem;
   border-top: 1px solid var(--color-rule);
-  text-align: right;
+}
+
+.desktop-shell__runtime {
+  color: var(--color-signal);
+  font-size: 0.75rem;
+}
+
+.desktop-shell__reset,
+.runtime-failure__reset {
+  padding-inline: 1rem;
+}
+
+.runtime-failure__title {
+  color: var(--color-alert);
+}
+
+.runtime-failure__reset {
+  justify-self: center;
+  margin-top: 2rem;
 }
 
 .startup-failure {
@@ -144,7 +426,6 @@ select {
   min-height: 100vh;
   place-content: center;
   padding: 2rem;
-  color: var(--color-ink);
   text-align: center;
 }
 
@@ -153,12 +434,120 @@ select {
   color: var(--color-alert);
 }
 
+@keyframes boot-scan {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(225%);
+  }
+}
+
+@keyframes desktop-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes signal-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes service-pulse {
+  from {
+    opacity: 0.55;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
 @media (max-width: 35rem) {
-  .host__header {
+  .system-header {
     align-items: flex-start;
   }
 
-  .host__identity {
-    padding-block: 3rem;
+  .boot-screen__content,
+  .desktop-shell__workspace {
+    padding-block: 2rem;
+  }
+
+  .boot-screen__title,
+  .desktop-shell__title {
+    font-size: 3.5rem;
+  }
+
+  .boot-diagnostics__row {
+    grid-template-columns: 1.5rem minmax(0, 1fr);
+  }
+
+  .boot-diagnostics__state {
+    grid-column: 2;
+    padding-bottom: 0.65rem;
+    text-align: left;
+  }
+
+  .firmware-screen__output {
+    padding-top: 1rem;
+  }
+
+  .firmware-checks__row {
+    grid-template-columns: auto 1fr auto;
+    gap: 0.35rem;
+  }
+
+  .desktop-shell__workspace {
+    grid-template-columns: 1fr;
+    align-content: center;
+    gap: 2.5rem;
+  }
+
+  .system-clock {
+    justify-items: start;
+    min-width: 0;
+    padding: 1.25rem 0 0;
+    border-top: 1px solid var(--color-rule-strong);
+    border-left: 0;
+  }
+
+  .system-clock__time {
+    font-size: 3.25rem;
+  }
+
+  .desktop-shell__footer {
+    align-items: flex-start;
+  }
+
+  .desktop-shell__reset {
+    max-width: 11rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  .boot-screen__content::after {
+    width: 100%;
+    transform: none;
   }
 }
