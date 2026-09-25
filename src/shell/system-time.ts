@@ -11,12 +11,12 @@ export function formatSystemTime(timestamp: number): SystemTime {
     throw new RangeError("System time requires a valid timestamp.");
   }
 
-  const year = value.getUTCFullYear();
-  const month = pad(value.getUTCMonth() + 1);
-  const day = pad(value.getUTCDate());
-  const hours = pad(value.getUTCHours());
-  const minutes = pad(value.getUTCMinutes());
-  const seconds = pad(value.getUTCSeconds());
+  const year = value.getFullYear();
+  const month = pad(value.getMonth() + 1);
+  const day = pad(value.getDate());
+  const hours = pad(value.getHours());
+  const minutes = pad(value.getMinutes());
+  const seconds = pad(value.getSeconds());
 
   return Object.freeze({
     iso: value.toISOString(),

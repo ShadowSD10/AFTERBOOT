@@ -52,6 +52,18 @@ button:hover {
   color: var(--color-ink);
 }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .system-header,
 .system-footer {
   display: flex;
@@ -119,6 +131,89 @@ button:hover {
   margin: 1.5rem 0 0;
   color: var(--color-muted);
   line-height: 1.6;
+}
+
+.power-on-screen,
+.firmware-screen {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  min-height: 100vh;
+  padding: var(--space-page);
+  color: #cbd6d1;
+  background: #010202;
+}
+
+.power-on-screen__signal {
+  align-self: center;
+  margin: 0;
+  color: #839189;
+  font-size: 0.7rem;
+  text-align: center;
+  text-transform: uppercase;
+  animation: signal-in 300ms 200ms both;
+}
+
+.power-on-screen__skip,
+.firmware-screen__skip {
+  justify-self: end;
+  min-height: 2.75rem;
+  padding-inline: 1rem;
+  border: 1px solid #26302c;
+  border-radius: 0;
+  color: #718078;
+  background: transparent;
+  cursor: pointer;
+}
+
+.firmware-screen__output {
+  align-self: start;
+  width: min(100%, 42rem);
+  padding-top: 2rem;
+}
+
+.firmware-screen__title,
+.firmware-screen__revision,
+.firmware-screen__status,
+.firmware-checks__row {
+  font-size: 0.8rem;
+  line-height: 1.65;
+  letter-spacing: 0;
+}
+
+.firmware-screen__title {
+  margin: 0;
+  color: var(--color-ink);
+  font-weight: 700;
+}
+
+.firmware-screen__revision {
+  margin: 0;
+  color: #839189;
+}
+
+.firmware-checks {
+  margin-top: 2rem;
+}
+
+.firmware-checks__row {
+  display: grid;
+  grid-template-columns: auto minmax(2rem, 1fr) auto;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.firmware-checks__leader {
+  overflow: hidden;
+  color: #3a4841;
+}
+
+.firmware-checks__state,
+.firmware-screen__status {
+  color: var(--color-signal);
+}
+
+.firmware-screen__status {
+  margin: 2rem 0 0;
 }
 
 .boot-screen,
@@ -195,7 +290,9 @@ button:hover {
 .boot-diagnostics {
   width: min(100%, 38rem);
   margin-top: 2rem;
+  padding: 0;
   border-top: 1px solid var(--color-rule);
+  list-style: none;
 }
 
 .boot-diagnostics__row {
@@ -210,13 +307,25 @@ button:hover {
   text-transform: uppercase;
 }
 
-.boot-diagnostics__index,
-.boot-diagnostics__state {
+.boot-diagnostics__index {
   color: var(--color-signal);
 }
 
 .boot-diagnostics__state {
   text-align: right;
+}
+
+.boot-diagnostics__state--waiting {
+  color: #65756e;
+}
+
+.boot-diagnostics__state--initializing {
+  color: var(--color-ink);
+  animation: service-pulse 900ms ease-in-out infinite alternate;
+}
+
+.boot-diagnostics__state--ok {
+  color: var(--color-signal);
 }
 
 .boot-screen__skip,
@@ -347,6 +456,26 @@ button:hover {
   }
 }
 
+@keyframes signal-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes service-pulse {
+  from {
+    opacity: 0.55;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
 @media (max-width: 35rem) {
   .system-header {
     align-items: flex-start;
@@ -370,6 +499,15 @@ button:hover {
     grid-column: 2;
     padding-bottom: 0.65rem;
     text-align: left;
+  }
+
+  .firmware-screen__output {
+    padding-top: 1rem;
+  }
+
+  .firmware-checks__row {
+    grid-template-columns: auto 1fr auto;
+    gap: 0.35rem;
   }
 
   .desktop-shell__workspace {

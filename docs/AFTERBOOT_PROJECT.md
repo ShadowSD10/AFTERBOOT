@@ -142,7 +142,7 @@ Core services never depend on application UI or browser DOM nodes.
 
 A single composition root should construct services, register applications, seed initial state, and start the shell. Dependencies should be passed explicitly rather than imported from mutable global singletons. A small `OSContext`/`SystemServices` interface can expose approved capabilities to applications.
 
-Milestone 1 implements this pattern for the lifecycle slice: the composition root injects a clock into the DOM-independent runtime, isolates browser time and motion queries behind platform adapters, and mounts the shell as a disposable projection of runtime snapshots.
+Milestone 1 implements this pattern for the lifecycle slice: the composition root injects a clock into the DOM-independent runtime, isolates browser time and motion queries behind platform adapters, and mounts the shell as a disposable projection of runtime snapshots. Boot progression is an explicit ordered stage model owned by the runtime, with one cancellable scheduled transition at a time; the shell only projects the current stage.
 
 ### State model
 

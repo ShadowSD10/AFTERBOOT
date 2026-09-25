@@ -1,10 +1,29 @@
-import { ShadowRuntime } from "../core/runtime/shadow-runtime";
+import { ShadowRuntime, type BootStageDurations } from "../core/runtime/shadow-runtime";
 import { BrowserClock } from "../platform/browser-clock";
 import { prefersReducedMotion } from "../platform/motion-preference";
 import { ShellView } from "../shell/shell-view";
 
-const STANDARD_BOOT_DURATION_MS = 2_400;
-const REDUCED_MOTION_BOOT_DURATION_MS = 0;
+const STANDARD_BOOT_STAGE_DURATIONS: BootStageDurations = {
+  "power-on": 700,
+  firmware: 1_600,
+  "system-initialization": 700,
+  "system-core": 900,
+  "system-clock": 850,
+  "display-system": 850,
+  "desktop-environment": 950,
+  finalizing: 650,
+};
+
+const REDUCED_MOTION_BOOT_STAGE_DURATIONS: BootStageDurations = {
+  "power-on": 300,
+  firmware: 700,
+  "system-initialization": 300,
+  "system-core": 350,
+  "system-clock": 350,
+  "display-system": 350,
+  "desktop-environment": 400,
+  finalizing: 300,
+};
 
 export interface AfterbootApplication {
   readonly runtime: ShadowRuntime;
@@ -21,7 +40,9 @@ export function startAfterboot(document: Document, browserWindow: Window): After
   const clock = new BrowserClock();
   const reducedMotion = prefersReducedMotion(browserWindow);
   const runtime = new ShadowRuntime(clock, {
-    bootDurationMs: reducedMotion ? REDUCED_MOTION_BOOT_DURATION_MS : STANDARD_BOOT_DURATION_MS,
+    bootStageDurations: reducedMotion
+      ? REDUCED_MOTION_BOOT_STAGE_DURATIONS
+      : STANDARD_BOOT_STAGE_DURATIONS,
   });
   const shellView = new ShellView(root, document, runtime, clock, reducedMotion);
   const disposeShell = shellView.mount();

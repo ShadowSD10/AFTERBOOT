@@ -4,8 +4,23 @@ import type { Clock } from "../time/clock";
 
 export type RuntimePhase = "startup" | "booting" | "ready" | "resetting" | "failed";
 
+export const BOOT_STAGES = [
+  "power-on",
+  "firmware",
+  "system-initialization",
+  "system-core",
+  "system-clock",
+  "display-system",
+  "desktop-environment",
+  "finalizing",
+] as const;
+
+export type BootStage = (typeof BOOT_STAGES)[number];
+export type BootStageDurations = Readonly<Record<BootStage, number>>;
+
 export type RuntimeTransitionReason =
   | "boot-requested"
+  | "boot-stage-advanced"
   | "boot-completed"
   | "boot-skipped"
   | "reset-requested"
@@ -15,6 +30,7 @@ export type RuntimeTransitionReason =
 export interface RuntimeSnapshot {
   readonly phase: RuntimePhase;
   readonly bootCycle: number;
+  readonly bootStage: BootStage | null;
   readonly failureMessage: string | null;
 }
 
@@ -28,12 +44,12 @@ export interface RuntimeStateChanged {
 }
 
 export interface ShadowRuntimeOptions {
-  readonly bootDurationMs: number;
+  readonly bootStageDurations: BootStageDurations;
 }
 
 const ALLOWED_TRANSITIONS: Readonly<Record<RuntimePhase, readonly RuntimePhase[]>> = {
   startup: ["booting", "resetting", "failed"],
-  booting: ["ready", "resetting", "failed"],
+  booting: ["booting", "ready", "resetting", "failed"],
   ready: ["resetting", "failed"],
   resetting: ["startup", "failed"],
   failed: ["resetting"],
@@ -50,12 +66,16 @@ export class ShadowRuntime {
   readonly #clock: Clock;
   readonly #options: ShadowRuntimeOptions;
   readonly #stateChanged = new TypedEvent<RuntimeStateChanged>();
-  #snapshot: RuntimeSnapshot = freezeSnapshot("startup", 0, null);
+  #snapshot: RuntimeSnapshot = freezeSnapshot("startup", 0, null, null);
   #cancelBoot: Disposable | null = null;
 
   constructor(clock: Clock, options: ShadowRuntimeOptions) {
-    if (!Number.isFinite(options.bootDurationMs) || options.bootDurationMs < 0) {
-      throw new RangeError("Boot duration must be a finite, non-negative number.");
+    for (const stage of BOOT_STAGES) {
+      const durationMs = options.bootStageDurations[stage];
+
+      if (!Number.isFinite(durationMs) || durationMs < 0) {
+        throw new RangeError(`Boot stage duration for ${stage} must be finite and non-negative.`);
+      }
     }
 
     this.#clock = clock;
@@ -76,11 +96,9 @@ export class ShadowRuntime {
     }
 
     const nextCycle = this.#snapshot.bootCycle + 1;
-    this.#transition("booting", "boot-requested", nextCycle, null);
-    this.#cancelBoot = this.#clock.schedule(() => {
-      this.#cancelBoot = null;
-      this.#transition("ready", "boot-completed", nextCycle, null);
-    }, this.#options.bootDurationMs);
+    const firstStage = BOOT_STAGES[0];
+    this.#transition("booting", "boot-requested", nextCycle, firstStage, null);
+    this.#scheduleStageCompletion(firstStage);
   }
 
   skipBoot(): boolean {
@@ -89,14 +107,14 @@ export class ShadowRuntime {
     }
 
     this.#cancelPendingBoot();
-    this.#transition("ready", "boot-skipped", this.#snapshot.bootCycle, null);
+    this.#transition("ready", "boot-skipped", this.#snapshot.bootCycle, null, null);
     return true;
   }
 
   reset(): void {
     this.#cancelPendingBoot();
-    this.#transition("resetting", "reset-requested", this.#snapshot.bootCycle, null);
-    this.#transition("startup", "reset-completed", this.#snapshot.bootCycle, null);
+    this.#transition("resetting", "reset-requested", this.#snapshot.bootCycle, null, null);
+    this.#transition("startup", "reset-completed", this.#snapshot.bootCycle, null, null);
     this.boot();
   }
 
@@ -106,7 +124,13 @@ export class ShadowRuntime {
     }
 
     this.#cancelPendingBoot();
-    this.#transition("failed", "runtime-failed", this.#snapshot.bootCycle, toFailureMessage(error));
+    this.#transition(
+      "failed",
+      "runtime-failed",
+      this.#snapshot.bootCycle,
+      null,
+      toFailureMessage(error),
+    );
   }
 
   dispose(): void {
@@ -119,10 +143,34 @@ export class ShadowRuntime {
     this.#cancelBoot = null;
   }
 
+  #scheduleStageCompletion(stage: BootStage): void {
+    this.#cancelBoot = this.#clock.schedule(() => {
+      this.#cancelBoot = null;
+      this.#advanceBoot(stage);
+    }, this.#options.bootStageDurations[stage]);
+  }
+
+  #advanceBoot(completedStage: BootStage): void {
+    if (this.#snapshot.phase !== "booting" || this.#snapshot.bootStage !== completedStage) {
+      return;
+    }
+
+    const nextStage = BOOT_STAGES[BOOT_STAGES.indexOf(completedStage) + 1];
+
+    if (!nextStage) {
+      this.#transition("ready", "boot-completed", this.#snapshot.bootCycle, null, null);
+      return;
+    }
+
+    this.#transition("booting", "boot-stage-advanced", this.#snapshot.bootCycle, nextStage, null);
+    this.#scheduleStageCompletion(nextStage);
+  }
+
   #transition(
     phase: RuntimePhase,
     reason: RuntimeTransitionReason,
     bootCycle: number,
+    bootStage: BootStage | null,
     failureMessage: string | null,
   ): void {
     const previous = this.#snapshot.phase;
@@ -131,7 +179,7 @@ export class ShadowRuntime {
       throw new RuntimeTransitionError(previous, phase);
     }
 
-    this.#snapshot = freezeSnapshot(phase, bootCycle, failureMessage);
+    this.#snapshot = freezeSnapshot(phase, bootCycle, bootStage, failureMessage);
     this.#stateChanged.emit(
       Object.freeze({
         type: "runtime-state-changed",
@@ -148,9 +196,10 @@ export class ShadowRuntime {
 function freezeSnapshot(
   phase: RuntimePhase,
   bootCycle: number,
+  bootStage: BootStage | null,
   failureMessage: string | null,
 ): RuntimeSnapshot {
-  return Object.freeze({ phase, bootCycle, failureMessage });
+  return Object.freeze({ phase, bootCycle, bootStage, failureMessage });
 }
 
 function toFailureMessage(error: unknown): string {
