@@ -2,7 +2,7 @@
 
 > **Status:** Living architectural reference  
 > **Last updated:** 2026-09-26  
-> **Current stage:** Milestone 1 runtime and boot shell implemented and locally verified; final milestone review pending
+> **Current stage:** Milestone 2 windows and applications implemented and locally verified; formal milestone review and CI verification pending
 
 ## Status vocabulary
 
@@ -144,6 +144,8 @@ A single composition root should construct services, register applications, seed
 
 Milestone 1 implements this pattern for the lifecycle slice: the composition root injects a clock into the DOM-independent runtime, isolates browser time and motion queries behind platform adapters, and mounts the shell as a disposable projection of runtime snapshots. Boot progression is an explicit ordered stage model owned by the runtime, with one cancellable scheduled transition at a time; the shell only projects the current stage.
 
+Milestone 2 extends the same pattern: the composition root constructs a startup-only application registry, application manager, and DOM-independent window manager. A disposable desktop view projects their snapshots, while a window-layer adapter owns DOM reconciliation and pointer capture. Application views receive only a host element and `Document` through a small mount/dispose contract. The initial application policy is single-instance; one instance may own a primary window plus scoped auxiliary windows.
+
 ### State model
 
 Each service owns its domain state and offers:
@@ -173,11 +175,11 @@ No UI technology is permanently mandated at this stage.
 | Bootstrap/composition root | Implemented (M1 base)   | Builds the runtime, injects adapters, seeds initial data, registers applications, and starts SHADOW OS.           |
 | OS runtime                 | Implemented (M1 base)   | Coordinates lifecycle and cross-service workflows without becoming a general-purpose god object.                  |
 | Event system               | Implemented (M1 base)   | Provides typed, synchronous domain notifications with explicit subscription disposal.                             |
-| Window manager             | Proposed                | Owns windows, focus order, geometry, modes, and lifecycle transitions.                                            |
-| Application framework      | Proposed                | Defines app manifests, registration, launch requests, instances, and access to approved OS services.              |
+| Window manager             | Implemented (M2 base)   | Owns windows, focus order, geometry, modes, and lifecycle transitions.                                            |
+| Application framework      | Implemented (M2 base)   | Defines immutable startup manifests, launch requests, single instances, scoped windows, and disposal.             |
 | Virtual filesystem         | Proposed                | Owns paths, nodes, file contents, metadata, directory operations, and filesystem events.                          |
 | Process/task service       | Proposed, later Phase 1 | Tracks running application instances and simulated system tasks; it does not represent real browser/OS processes. |
-| Shell                      | Partial (M1 boot shell) | Renders desktop surfaces, task area, launcher, notifications, context menus, and global keyboard/focus behavior.  |
+| Shell                      | Partial (M2 shell)      | Renders boot/desktop surfaces, launcher, task strip, application windows, and keyboard/pointer focus behavior.    |
 | Settings/configuration     | Proposed                | Stores typed runtime preferences and system configuration, initially in memory.                                   |
 | Notifications              | Proposed                | Accepts structured notifications and manages their visible lifecycle.                                             |
 | Search                     | Future idea             | Queries indexed resources through provider interfaces rather than knowing every subsystem.                        |
@@ -351,12 +353,14 @@ Keep tests near modules if that proves easier to maintain; the exact test layout
 
 ### Milestone 2 — windows and applications
 
+**Status:** Implemented and locally verified; formal review and CI verification pending.
+
 - Implement window state transitions independently of the DOM.
 - Add focus, movement, resize, minimize, maximize, restore, and close behavior.
 - Define the application registry and application context.
 - Build one diagnostic/sample app to exercise lifecycle behavior.
 
-**Exit criterion:** Multiple app instances can be operated through pointer and keyboard input with tested state transitions.
+**Exit criterion:** Multiple application windows can be operated through pointer and keyboard-accessible controls with tested state transitions. M2 applications are single-instance; the diagnostic instance proves simultaneous primary and auxiliary windows.
 
 ### Milestone 3 — virtual filesystem and proof applications
 
@@ -463,9 +467,9 @@ Root-level `CHANGELOG.md` records notable changes under `[Unreleased]` until a r
 | A-005 | Decided  | TypeScript is the primary implementation language.                                      | Supports explicit contracts and safe evolution of interconnected systems.                                              |
 | A-006 | Decided  | Begin with vanilla TypeScript rather than a UI framework.                               | Avoids committing to framework abstractions before UI needs are understood. Reassess after the first substantial apps. |
 | A-007 | Decided  | Use Vite as the development/build tool.                                                 | Produces static assets, supports TypeScript well, and allows GitHub Pages base configuration.                          |
-| A-008 | Proposed | Use service-owned state plus typed events rather than a universal global store.         | Matches subsystem authority while keeping the first implementation small.                                              |
+| A-008 | Decided  | Use service-owned state plus typed events rather than a universal global store.         | Proven by the runtime, application, and window services without introducing shared mutable DOM state.                  |
 | A-009 | Proposed | Start with an in-memory filesystem behind a storage-neutral interface.                  | Meets the no-persistence requirement while preserving a future persistence path.                                       |
-| A-010 | Proposed | Use one composition root and explicit dependency injection without a DI framework.      | Keeps construction understandable and tests easy to isolate.                                                           |
+| A-010 | Decided  | Use one composition root and explicit dependency injection without a DI framework.      | Proven by deterministic application/window composition and isolated service tests.                                     |
 | A-011 | Proposed | Avoid URL-based in-OS navigation initially.                                             | The desktop is a stateful single experience and GitHub Pages has route fallback constraints.                           |
 | A-012 | Decided  | Scenario infrastructure is deferred until foundational OS contracts are proven.         | Prevents scenario needs from being guessed and baked into unstable systems.                                            |
 

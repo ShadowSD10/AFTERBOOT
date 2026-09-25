@@ -6,9 +6,11 @@ import {
   type ShadowRuntime,
 } from "../core/runtime/shadow-runtime";
 import type { Clock } from "../core/time/clock";
-import { formatSystemTime } from "./system-time";
+import type { ApplicationManager } from "../applications/framework/application-manager";
+import type { ApplicationRegistry } from "../applications/framework/application-registry";
+import { DesktopView } from "./desktop/desktop-view";
+import type { WindowManager } from "./windows/window-manager";
 
-const CLOCK_UPDATE_INTERVAL_MS = 1_000;
 const SKIP_BOOT_ACTION = "skip-boot";
 
 interface BootService {
@@ -29,8 +31,12 @@ export class ShellView {
   readonly #runtime: ShadowRuntime;
   readonly #clock: Clock;
   readonly #reducedMotion: boolean;
+  readonly #browserWindow: Window;
+  readonly #registry: ApplicationRegistry;
+  readonly #applicationManager: ApplicationManager;
+  readonly #windowManager: WindowManager;
   #unsubscribeRuntime: Disposable | null = null;
-  #cancelClockUpdate: Disposable | null = null;
+  #disposeDesktop: Disposable | null = null;
 
   constructor(
     root: HTMLElement,
@@ -38,12 +44,20 @@ export class ShellView {
     runtime: ShadowRuntime,
     clock: Clock,
     reducedMotion: boolean,
+    browserWindow: Window,
+    registry: ApplicationRegistry,
+    applicationManager: ApplicationManager,
+    windowManager: WindowManager,
   ) {
     this.#root = root;
     this.#document = document;
     this.#runtime = runtime;
     this.#clock = clock;
     this.#reducedMotion = reducedMotion;
+    this.#browserWindow = browserWindow;
+    this.#registry = registry;
+    this.#applicationManager = applicationManager;
+    this.#windowManager = windowManager;
   }
 
   mount(): Disposable {
@@ -57,12 +71,14 @@ export class ShellView {
   }
 
   render(snapshot: RuntimeSnapshot): void {
-    this.#cancelClock();
+    this.#disposeDesktop?.();
+    this.#disposeDesktop = null;
     this.#root.dataset.runtimePhase = snapshot.phase;
     const restoreSkipFocus =
       this.#document.activeElement instanceof HTMLElement &&
       this.#document.activeElement.dataset.action === SKIP_BOOT_ACTION;
     let content: HTMLElement;
+    let desktopView: DesktopView | null = null;
 
     if (snapshot.bootStage) {
       this.#root.dataset.bootStage = snapshot.bootStage;
@@ -79,7 +95,17 @@ export class ShellView {
         content = this.#renderBoot(snapshot);
         break;
       case "ready":
-        content = this.#renderDesktop(snapshot);
+        desktopView = new DesktopView(
+          this.#document,
+          this.#browserWindow,
+          this.#runtime,
+          this.#clock,
+          this.#registry,
+          this.#applicationManager,
+          this.#windowManager,
+          snapshot.bootCycle,
+        );
+        content = desktopView.element;
         break;
       case "failed":
         content = this.#renderFailure(snapshot);
@@ -87,6 +113,7 @@ export class ShellView {
     }
 
     this.#root.replaceChildren(content);
+    this.#disposeDesktop = desktopView?.mount() ?? null;
 
     if (restoreSkipFocus) {
       this.#root.querySelector<HTMLButtonElement>(`[data-action="${SKIP_BOOT_ACTION}"]`)?.focus();
@@ -94,7 +121,8 @@ export class ShellView {
   }
 
   dispose(): void {
-    this.#cancelClock();
+    this.#disposeDesktop?.();
+    this.#disposeDesktop = null;
     this.#unsubscribeRuntime?.();
     this.#unsubscribeRuntime = null;
     delete this.#document.documentElement.dataset.motion;
@@ -203,54 +231,6 @@ export class ShellView {
     return main;
   }
 
-  #renderDesktop(snapshot: RuntimeSnapshot): HTMLElement {
-    const main = this.#element("main", "desktop-shell");
-    main.setAttribute("aria-labelledby", "desktop-title");
-
-    const header = this.#element("header", "system-header desktop-shell__header");
-    header.append(
-      this.#element("span", "system-header__brand", "SHADOW OS"),
-      this.#element("span", "system-header__state", "SYSTEM / READY"),
-    );
-
-    const workspace = this.#element("section", "desktop-shell__workspace");
-    const identity = this.#element("div", "desktop-shell__identity");
-    const environment = this.#element(
-      "p",
-      "desktop-shell__environment",
-      `ENVIRONMENT / CYCLE ${snapshot.bootCycle.toString().padStart(2, "0")}`,
-    );
-    const title = this.#element("h1", "desktop-shell__title", "Desktop ready");
-    title.id = "desktop-title";
-    const description = this.#element(
-      "p",
-      "desktop-shell__description",
-      "Core runtime online. Workspace services awaiting installation.",
-    );
-    identity.append(environment, title, description);
-
-    const clockPanel = this.#element("section", "system-clock");
-    clockPanel.setAttribute("aria-label", "SHADOW OS system clock");
-    const clockLabel = this.#element("span", "system-clock__label", "LOCAL SYSTEM TIME");
-    const time = this.#element("time", "system-clock__time");
-    const date = this.#element("span", "system-clock__date");
-    clockPanel.append(clockLabel, time, date);
-    this.#startClock(time, date);
-
-    workspace.append(identity, clockPanel);
-
-    const footer = this.#element("footer", "desktop-shell__footer");
-    const runtimeState = this.#element("span", "desktop-shell__runtime", "RUNTIME STABLE");
-    const resetButton = this.#element("button", "desktop-shell__reset", "Restart SHADOW OS");
-    resetButton.type = "button";
-    resetButton.title = "Restart SHADOW OS";
-    resetButton.addEventListener("click", () => this.#runtime.reset());
-    footer.append(runtimeState, resetButton);
-
-    main.append(header, workspace, footer);
-    return main;
-  }
-
   #renderFailure(snapshot: RuntimeSnapshot): HTMLElement {
     const main = this.#element("main", "runtime-failure");
     main.setAttribute("aria-labelledby", "failure-title");
@@ -317,23 +297,6 @@ export class ShellView {
     button.dataset.action = SKIP_BOOT_ACTION;
     button.addEventListener("click", () => this.#runtime.skipBoot());
     return button;
-  }
-
-  #startClock(timeElement: HTMLTimeElement, dateElement: HTMLElement): void {
-    const update = (): void => {
-      const systemTime = formatSystemTime(this.#clock.now());
-      timeElement.dateTime = systemTime.iso;
-      timeElement.textContent = systemTime.time;
-      dateElement.textContent = systemTime.date;
-      this.#cancelClockUpdate = this.#clock.schedule(update, CLOCK_UPDATE_INTERVAL_MS);
-    };
-
-    update();
-  }
-
-  #cancelClock(): void {
-    this.#cancelClockUpdate?.();
-    this.#cancelClockUpdate = null;
   }
 
   #element<K extends keyof HTMLElementTagNameMap>(

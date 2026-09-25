@@ -1,7 +1,12 @@
 import { ShadowRuntime, type BootStageDurations } from "../core/runtime/shadow-runtime";
+import { SequentialIdGenerator } from "../core/identity/identifiers";
+import { ApplicationRegistry } from "../applications/framework/application-registry";
+import { ApplicationManager } from "../applications/framework/application-manager";
+import { createSystemDiagnosticsDefinition } from "../applications/built-in/system-diagnostics";
 import { BrowserClock } from "../platform/browser-clock";
 import { prefersReducedMotion } from "../platform/motion-preference";
 import { ShellView } from "../shell/shell-view";
+import { WindowManager } from "../shell/windows/window-manager";
 
 const STANDARD_BOOT_STAGE_DURATIONS: BootStageDurations = {
   "power-on": 700,
@@ -44,7 +49,26 @@ export function startAfterboot(document: Document, browserWindow: Window): After
       ? REDUCED_MOTION_BOOT_STAGE_DURATIONS
       : STANDARD_BOOT_STAGE_DURATIONS,
   });
-  const shellView = new ShellView(root, document, runtime, clock, reducedMotion);
+  const ids = new SequentialIdGenerator();
+  const windowManager = new WindowManager(ids, { x: 0, y: 0, width: 1, height: 1 });
+  const registry = new ApplicationRegistry([createSystemDiagnosticsDefinition()]);
+  const applicationManager = new ApplicationManager(registry, windowManager, ids);
+  const disposeRuntimeServices = runtime.onStateChanged((event) => {
+    if (event.reason === "reset-requested" || event.reason === "runtime-failed") {
+      applicationManager.reset();
+    }
+  });
+  const shellView = new ShellView(
+    root,
+    document,
+    runtime,
+    clock,
+    reducedMotion,
+    browserWindow,
+    registry,
+    applicationManager,
+    windowManager,
+  );
   const disposeShell = shellView.mount();
 
   runtime.boot();
@@ -53,6 +77,9 @@ export function startAfterboot(document: Document, browserWindow: Window): After
     runtime,
     dispose(): void {
       disposeShell();
+      disposeRuntimeServices();
+      applicationManager.dispose();
+      windowManager.dispose();
       runtime.dispose();
     },
   };
