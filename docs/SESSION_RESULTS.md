@@ -1,100 +1,78 @@
-# Milestone 0 Session Results
+# Develop Staging Investigation Results
 
-Milestone 0 is implemented and locally verified.
+## Current Setup
 
-## Files Created
+- Production site: `https://shadowsd10.github.io/AFTERBOOT/`
+- GitHub Pages publishing source: GitHub Actions
+- Production deployment branch: `main`
+- Pages environment: `github-pages`
+- Pages environment branch policy: `main` only
+- `AFTERBOOT Release` deploys only pushes to `main`.
+- `AFTERBOOT Build` validates pushes to both `main` and `develop`, but does not deploy them.
+- Vite emits relative asset paths through `base: "./"`.
 
-- Tooling: `package.json`, `package-lock.json`, `tsconfig.json`, `vite.config.ts`, `eslint.config.js`, `playwright.config.ts`
-- Formatting and ignores: `.prettierrc.json`, `.prettierignore`, `.gitignore`
-- Host: `index.html`, `src/main.ts`, `src/bootstrap/host-model.ts`, `src/bootstrap/render-host.ts`, `src/bootstrap/start-afterboot.ts`, `src/styles/main.css`
-- Tests: `tests/unit/host-model.test.ts`, `tests/e2e/host.smoke.spec.ts`
-- Automation: `.github/workflows/afterboot-build.yml`, `.github/workflows/afterboot-release.yml`
-- Documentation: `README.md`
+The latest observed production deployment and both observed build runs completed successfully. Local `main` and `develop` pointed to the same commit at the time of investigation.
 
-## Files Modified
+## Separate Develop Site Feasibility
 
-- `CHANGELOG.md`
-- `docs/AFTERBOOT_PROJECT.md`
+A separate live site for `develop` is not available within the current `AFTERBOOT` repository as an independent GitHub Pages site. GitHub supports a maximum of one project Pages site per repository.
 
-## Dependencies
+Additional workflows or GitHub environments would still target the same Pages site. A GitHub environment controls deployment permissions and history; it does not create another Pages URL or hosting target.
 
-- `vite@7.3.6`: development server and static build.
-- `typescript@5.9.3`, `@types/node@24.13.6`: strict typing and configuration types.
-- `eslint@9.39.5`, `@eslint/js@9.39.5`, `typescript-eslint@8.70.1`, `globals@16.5.0`: linting.
-- `prettier@3.9.9`: formatting.
-- `vitest@3.2.7`: unit testing.
-- `@playwright/test@1.63.0`: production browser smoke testing.
+A genuinely separate staging site is possible by using a second GitHub repository dedicated to staging.
 
-All are development dependencies.
+## Recommended Hosting Approach
 
-## Project Structure
+Create a repository such as:
 
-```text
-.github/workflows/
-  afterboot-build.yml
-  afterboot-release.yml
-docs/
-  AFTERBOOT_PROJECT.md
-src/
-  bootstrap/
-    host-model.ts
-    render-host.ts
-    start-afterboot.ts
-  styles/main.css
-  main.ts
-tests/
-  e2e/host.smoke.spec.ts
-  unit/host-model.test.ts
-CHANGELOG.md
-README.md
-index.html
-package.json
-tsconfig.json
-vite.config.ts
-eslint.config.js
-playwright.config.ts
-```
+- Repository: `ShadowSD10/AFTERBOOT-staging`
+- Site: `https://shadowsd10.github.io/AFTERBOOT-staging/`
 
-Generated `dist/`, `node_modules/`, Playwright results, and `.playwright-mcp/` are ignored.
+The existing production site would remain:
 
-## Scripts
+- `main` → `https://shadowsd10.github.io/AFTERBOOT/`
+- `develop` → `https://shadowsd10.github.io/AFTERBOOT-staging/`
 
-- `npm run dev`
-- `npm run build`
-- `npm run preview`
-- `npm run typecheck`
-- `npm run lint`
-- `npm run format`
-- `npm run format:check`
-- `npm test`
-- `npm run test:watch`
-- `npm run test:e2e`
+The current relative Vite asset paths are compatible with either repository subpath.
 
-## Automation
+## Required Future Changes
 
-- CI checks formatting, typing, linting, unit tests, production build, and Chromium smoke testing.
-- The Pages workflow builds and uploads only `dist/`.
-- Vite emits relative `./assets/...` URLs, avoiding a hardcoded repository name.
+Implementing the recommended approach would require:
 
-## Verification
+1. Creating the `AFTERBOOT-staging` repository.
+2. Enabling GitHub Pages for that repository.
+3. Adding automation triggered by pushes to `develop`.
+4. Building the `develop` revision and publishing `dist/` to the staging repository.
+5. Configuring narrowly scoped cross-repository authentication, such as a fine-grained token or GitHub App credential stored as an Actions secret.
+6. Keeping the existing `main` production deployment workflow unchanged.
 
-- Typecheck: passed
-- ESLint: passed
-- Prettier: passed
-- Vitest: 1 test passed
-- Production build: passed
-- Playwright: 1 smoke test passed
-- Desktop and mobile visual checks: passed
-- Console errors, page errors, and failed requests: none
+These are proposed future changes only; none were implemented during this investigation.
 
-## Architectural Decisions
+## Same-Repository Alternative
 
-Vanilla TypeScript and Vite are now recorded as decided. The browser baseline is current evergreen browsers, with Chromium automated initially.
+A path such as `https://shadowsd10.github.io/AFTERBOOT/develop/` is technically possible if every deployment publishes one combined artifact containing both the production root and a development subdirectory.
 
-## Remaining Verification
+This is not a separate site. GitHub Pages replaces the complete published artifact on each deployment, so production and staging would share one deployment target and lifecycle.
 
-Hosted CI and Pages execution remains pending repository initialization and push. At the end of this session, the workspace had no `.git` metadata.
+Supporting this approach would require changing workflow triggers, permitting `develop` to deploy to the `github-pages` environment, assembling both branch builds into every artifact, and coordinating deployments to prevent races.
 
-## Release Status
+## Production Risk
 
-No `v0.1.0` changelog entry, Git tag, GitHub Release, or release claim was created.
+Deploying `develop` into the existing Pages site could affect production because a development deployment would replace the same artifact that serves the production root. A workflow, packaging, or concurrency error could overwrite or break the live site.
+
+A separate staging repository isolates its URL, deployment history, permissions, failures, and generated artifacts from production. Changes to staging automation could still fail independently, but they would not write to the production Pages target.
+
+## Recommendation
+
+Use a dedicated public `AFTERBOOT-staging` repository and deploy `develop` there. This provides:
+
+- Independent production and staging URLs
+- Independent deployment histories
+- Clear branch-to-environment ownership
+- Failure isolation
+- Static, GitHub-native hosting
+- No staging writes to the production Pages site
+
+## Investigation Scope
+
+No files, workflows, GitHub Pages settings, commits, branches, tags, releases, or deployments were changed during this investigation.
