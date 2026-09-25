@@ -2,7 +2,7 @@
 
 > **Status:** Living architectural reference  
 > **Last updated:** 2026-09-26  
-> **Current stage:** Milestone 0 foundation implemented and locally verified; hosted workflow verification pending
+> **Current stage:** Milestone 1 runtime and boot shell implemented and verified on its feature branch; final milestone review pending
 
 ## Status vocabulary
 
@@ -142,6 +142,8 @@ Core services never depend on application UI or browser DOM nodes.
 
 A single composition root should construct services, register applications, seed initial state, and start the shell. Dependencies should be passed explicitly rather than imported from mutable global singletons. A small `OSContext`/`SystemServices` interface can expose approved capabilities to applications.
 
+Milestone 1 implements this pattern for the lifecycle slice: the composition root injects a clock into the DOM-independent runtime, isolates browser time and motion queries behind platform adapters, and mounts the shell as a disposable projection of runtime snapshots. Boot progression is an explicit ordered stage model owned by the runtime, with one cancellable scheduled transition at a time; the shell only projects the current stage. Skip, reset, failure, and disposal cancel pending boot work before changing lifecycle state.
+
 ### State model
 
 Each service owns its domain state and offers:
@@ -168,19 +170,19 @@ No UI technology is permanently mandated at this stage.
 
 | Subsystem                  | Status                  | Purpose                                                                                                           |
 | -------------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Bootstrap/composition root | Proposed                | Builds the runtime, injects adapters, seeds initial data, registers applications, and starts SHADOW OS.           |
-| OS runtime                 | Proposed                | Coordinates lifecycle and cross-service workflows without becoming a general-purpose god object.                  |
-| Event system               | Proposed                | Provides typed, synchronous domain notifications with explicit subscription disposal.                             |
+| Bootstrap/composition root | Implemented (M1 base)   | Builds the runtime, injects adapters, seeds initial data, registers applications, and starts SHADOW OS.           |
+| OS runtime                 | Implemented (M1 base)   | Coordinates lifecycle and cross-service workflows without becoming a general-purpose god object.                  |
+| Event system               | Implemented (M1 base)   | Provides typed, synchronous domain notifications with explicit subscription disposal.                             |
 | Window manager             | Proposed                | Owns windows, focus order, geometry, modes, and lifecycle transitions.                                            |
 | Application framework      | Proposed                | Defines app manifests, registration, launch requests, instances, and access to approved OS services.              |
 | Virtual filesystem         | Proposed                | Owns paths, nodes, file contents, metadata, directory operations, and filesystem events.                          |
 | Process/task service       | Proposed, later Phase 1 | Tracks running application instances and simulated system tasks; it does not represent real browser/OS processes. |
-| Shell                      | Proposed                | Renders desktop surfaces, task area, launcher, notifications, context menus, and global keyboard/focus behavior.  |
+| Shell                      | Partial (M1 boot shell) | Renders desktop surfaces, task area, launcher, notifications, context menus, and global keyboard/focus behavior.  |
 | Settings/configuration     | Proposed                | Stores typed runtime preferences and system configuration, initially in memory.                                   |
 | Notifications              | Proposed                | Accepts structured notifications and manages their visible lifecycle.                                             |
 | Search                     | Future idea             | Queries indexed resources through provider interfaces rather than knowing every subsystem.                        |
 | Scenario engine            | Deferred to Phase 2     | Loads scenario definitions, applies setup, evaluates objectives, and records scenario state.                      |
-| Platform adapters          | Proposed                | Isolate browser-specific APIs such as storage, time, animation, and viewport behavior where testability benefits. |
+| Platform adapters          | Partial (M1)            | Isolate browser-specific APIs such as storage, time, animation, and viewport behavior where testability benefits. |
 
 ## 9. Subsystem responsibilities and boundaries
 
@@ -328,7 +330,7 @@ Keep tests near modules if that proves easier to maintain; the exact test layout
 
 ### Milestone 0 — foundation
 
-**Status:** Implemented and locally verified. The first hosted GitHub Actions and Pages runs remain pending repository setup.
+**Status:** Complete. Local quality gates, GitHub Actions validation, and the production Pages deployment have passed.
 
 - Adopt Vite, strict TypeScript, formatting/linting, and test tooling.
 - Establish static build and GitHub Pages base-path behavior.
@@ -339,6 +341,8 @@ Keep tests near modules if that proves easier to maintain; the exact test layout
 **Exit criterion:** A blank but intentional SHADOW OS host page builds, tests, and deploys from a clean checkout.
 
 ### Milestone 1 — runtime and boot shell
+
+**Status:** Implemented and verified on `feature/m1-runtime-boot-shell`; final milestone review pending.
 
 - Define runtime lifecycle states.
 - Implement a skippable, reduced-motion-aware boot sequence.

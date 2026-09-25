@@ -111,60 +111,62 @@ When work progresses:
 
 ## Milestone 1 — Runtime and Boot Shell
 
-**Status:** ⬜ Not started  
+**Status:** 🔵 Ready for verification — implementation is ready for final milestone review
 **Purpose:** Introduce the first SHADOW OS runtime lifecycle, an accessible boot experience, and a basic responsive desktop shell without implementing windows, applications, filesystems, processes, or scenarios.  
 **Dependencies/prerequisites:** Milestone 0 must remain complete and all foundation quality gates must pass.
 
 ### Scope and implementation requirements
 
-- [ ] Define typed SHADOW OS runtime lifecycle states covering startup, readiness, reset, and failure behavior.
-- [ ] Keep runtime lifecycle state independent from rendered DOM state.
-- [ ] Construct the runtime and its dependencies through the composition root.
-- [ ] Implement a deliberate boot sequence that leads to the desktop shell.
-- [ ] Provide an accessible way to skip the boot sequence.
-- [ ] Respect the user's reduced-motion preference without blocking progress to the desktop.
-- [ ] Render a basic SHADOW OS desktop shell after boot.
-- [ ] Make the boot and desktop surfaces responsive at supported viewport sizes.
-- [ ] Provide a system clock through an injectable clock contract.
-- [ ] Make clock-dependent behavior deterministic in tests.
-- [ ] Add only the typed runtime events required for boot, readiness, reset, or failure coordination.
-- [ ] Ensure every event subscription introduced by this milestone has an explicit disposal path.
-- [ ] Allow SHADOW OS to reset and boot again without reloading the browser page.
-- [ ] Preserve the application-wide failure fallback.
-- [ ] Keep windows, applications, virtual filesystems, processes, notifications, and scenarios out of this milestone.
+- [x] Define typed SHADOW OS runtime lifecycle states covering startup, readiness, reset, and failure behavior.
+- [x] Keep runtime lifecycle state independent from rendered DOM state.
+- [x] Construct the runtime and its dependencies through the composition root.
+- [x] Implement a deliberate boot sequence that leads to the desktop shell.
+- [x] Provide an accessible way to skip the boot sequence.
+- [x] Respect the user's reduced-motion preference without blocking progress to the desktop.
+- [x] Render a basic SHADOW OS desktop shell after boot.
+- [x] Make the boot and desktop surfaces responsive at supported viewport sizes.
+- [x] Provide a system clock through an injectable clock contract.
+- [x] Make clock-dependent behavior deterministic in tests.
+- [x] Add only the typed runtime events required for boot, readiness, reset, or failure coordination.
+- [x] Ensure every event subscription introduced by this milestone has an explicit disposal path.
+- [x] Allow SHADOW OS to reset and boot again without reloading the browser page.
+- [x] Preserve the application-wide failure fallback.
+- [x] Keep windows, applications, virtual filesystems, processes, notifications, and scenarios out of this milestone.
 
 ### Required tests and verification
 
-- [ ] Unit tests cover valid runtime lifecycle transitions and invalid transition handling.
-- [ ] Unit tests cover reset behavior.
-- [ ] Unit tests use an injected deterministic clock for time-dependent behavior.
-- [ ] Typed event tests cover delivery and listener disposal if an event abstraction is introduced.
-- [ ] Integration tests cover boot → ready and reset → boot → ready workflows.
-- [ ] Playwright verifies that SHADOW OS reaches the desktop.
-- [ ] Playwright verifies that boot can be skipped using an accessible control.
-- [ ] Playwright verifies reduced-motion behavior.
-- [ ] Playwright verifies reset without a page reload.
-- [ ] Browser verification covers keyboard operation, supported desktop/mobile sizes, and unexpected console errors.
+- [x] Unit tests cover valid runtime lifecycle transitions and invalid transition handling.
+- [x] Unit tests cover reset behavior.
+- [x] Unit tests use an injected deterministic clock for time-dependent behavior.
+- [x] Typed event tests cover delivery and listener disposal if an event abstraction is introduced.
+- [x] Integration tests cover boot → ready and reset → boot → ready workflows.
+- [x] Playwright verifies that SHADOW OS reaches the desktop.
+- [x] Playwright verifies that boot can be skipped using an accessible control.
+- [x] Playwright verifies reduced-motion behavior.
+- [x] Playwright verifies reset without a page reload.
+- [x] Browser verification covers keyboard operation, supported desktop/mobile sizes, and unexpected console errors.
 - [ ] Typecheck, lint, formatting, unit/integration tests, production build, and browser tests pass locally and in `AFTERBOOT Build`.
 
 ### Definition of Done
 
-- [ ] SHADOW OS reliably transitions from initialization through boot to a ready desktop.
-- [ ] The boot experience is accessible, skippable, and reduced-motion-aware.
-- [ ] The basic desktop shell remains coherent at supported viewport sizes.
-- [ ] Clock behavior is injectable and deterministic under test.
-- [ ] Reset returns the runtime to a valid boot flow without reloading the page.
-- [ ] Runtime state and required events have focused, typed contracts with no DOM coupling.
+- [x] SHADOW OS reliably transitions from initialization through boot to a ready desktop.
+- [x] The boot experience is accessible, skippable, and reduced-motion-aware.
+- [x] The basic desktop shell remains coherent at supported viewport sizes.
+- [x] Clock behavior is injectable and deterministic under test.
+- [x] Reset returns the runtime to a valid boot flow without reloading the page.
+- [x] Runtime state and required events have focused, typed contracts with no DOM coupling.
 - [ ] All Milestone 1 checks and required automated/browser verification pass.
-- [ ] The production build passes and no known blocking issue remains.
-- [ ] Scope review confirms that no Milestone 2 or later functionality was introduced.
+- [x] The production build passes and no known blocking issue remains.
+- [x] Scope review confirms that no Milestone 2 or later functionality was introduced.
 - [ ] Milestone 1 has been reviewed and approved before Milestone 2 begins.
 
 ### Completion record
 
 - **Completion date:** Pending
-- **Verification performed:** Pending
-- **Test results:** Pending
+- **Implementation commit:** `76e7935da255055ab8289e62f3c4f6d7c7cc917c`
+- **Verification performed:** Local formatting, typecheck, ESLint, production build, Vitest, and Playwright passed. Project-owner browser verification passed for the normal boot, sequential stages, skip, reset, local clock/date accuracy, responsive desktop/mobile behavior, keyboard operation, and visual layout. Manual reduced-motion verification was not performed; automated reduced-motion Playwright coverage passed.
+- **Test results:** 14 Vitest tests and 7 Playwright tests passed. Browser tests reported no console errors or failed requests.
+- **Remaining review:** Confirm the `AFTERBOOT Build` evidence required by the combined quality-gate checklist item, perform final milestone review and approval, and decide whether a manual reduced-motion check is required for approval.
 - **Release/version:** None assigned
 
 ---
