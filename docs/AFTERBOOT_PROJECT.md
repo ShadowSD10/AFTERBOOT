@@ -2,7 +2,7 @@
 
 > **Status:** Living architectural reference  
 > **Last updated:** 2026-09-26  
-> **Current stage:** Milestone 0 and its hosted deployment are complete; Milestone 1 is implemented and ready for final review; Milestone 2 has not started
+> **Current stage:** Milestones 0 and 1 are complete; Milestone 2 is next and has not started
 
 ## Status vocabulary
 
@@ -142,7 +142,7 @@ Core services never depend on application UI or browser DOM nodes.
 
 A single composition root should construct services, register applications, seed initial state, and start the shell. Dependencies should be passed explicitly rather than imported from mutable global singletons. A small `OSContext`/`SystemServices` interface can expose approved capabilities to applications.
 
-Milestone 1 implements this pattern for the lifecycle slice: the composition root injects a clock into the DOM-independent runtime, isolates browser time and motion queries behind platform adapters, and mounts the shell as a disposable projection of runtime snapshots. Boot progression is an explicit ordered stage model owned by the runtime, with one cancellable scheduled transition at a time; the shell only projects the current stage. Skip, reset, failure, and disposal cancel pending boot work before changing lifecycle state.
+Milestone 1 established this pattern for the lifecycle slice: the composition root injects a clock into the DOM-independent runtime, isolates browser time and motion queries behind platform adapters, and mounts the shell as a disposable projection of runtime snapshots. Boot progression is an explicit ordered stage model owned by the runtime, with one cancellable scheduled transition at a time; the shell only projects the current stage. Skip, reset, failure, and disposal cancel pending boot work before changing lifecycle state.
 
 ### State model
 
@@ -342,7 +342,7 @@ Keep tests near modules if that proves easier to maintain; the exact test layout
 
 ### Milestone 1 — runtime and boot shell
 
-**Status:** Implemented and verified on `feature/m1-runtime-boot-shell`; final milestone review pending.
+**Status:** Complete as of 2026-09-26. Implemented and verified on `feature/m1-runtime-boot-shell`.
 
 - Define runtime lifecycle states.
 - Implement a skippable, reduced-motion-aware boot sequence.
@@ -352,6 +352,8 @@ Keep tests near modules if that proves easier to maintain; the exact test layout
 **Exit criterion:** SHADOW OS reliably boots to an accessible desktop and can reset without a reload during tests.
 
 ### Milestone 2 — windows and applications
+
+**Status:** Not started. This is the next milestone.
 
 - Implement window state transitions independently of the DOM.
 - Add focus, movement, resize, minimize, maximize, restore, and close behavior.
@@ -511,4 +513,4 @@ Future features must preserve the static-runtime constraint unless the project's
 
 ## Immediate next step
 
-Complete the final **Milestone 1** review using `docs/AFTERBOOT_MILESTONES.md` as the gate and decide whether approval requires a separate manual reduced-motion check. Do not begin Milestone 2 until the Milestone 1 Definition of Done is fully satisfied and approved.
+Begin **Milestone 2** planning from its not-started checklist in `docs/AFTERBOOT_MILESTONES.md`. Milestone 1 is complete; no Milestone 2 implementation has started.

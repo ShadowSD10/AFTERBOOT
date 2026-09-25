@@ -3,7 +3,7 @@
 ## Milestone 1 Implementation Verification
 
 - **Date:** 2026-09-26
-- **Status:** Ready for final milestone review; not yet complete or approved
+- **Status:** Complete; final milestone review approved
 - **Implementation branch:** `feature/m1-runtime-boot-shell`
 - **Implementation commit:** `76e7935da255055ab8289e62f3c4f6d7c7cc917c`
 
@@ -22,12 +22,13 @@ Project-owner verification passed for the normal boot experience, sequential boo
 
 Manual reduced-motion verification was intentionally not performed. Reduced-motion behavior passed automated Playwright verification and retained a shorter coherent stage sequence.
 
-### Remaining Review
+### Formal Closure
 
-- Decide whether final approval requires a separate manual reduced-motion check.
-- Complete final milestone review and approval before Milestone 2 begins.
+- Final review completed on 2026-09-26, and Milestone 1 was marked complete.
+- The completed evidence includes implementation commit `76e7935`, successful `AFTERBOOT Build` run `36186067968`, all recorded automated checks, and project-owner browser verification.
+- Automated reduced-motion verification passed. Manual reduced-motion verification was not performed, and this qualification remains part of the closure record.
 
-No Milestone 2 functionality was introduced, and no release or version was created.
+No Milestone 2 functionality was introduced, and no release or version was created. Milestone 2 is next and remains not started.
 
 ---
 
