@@ -1,357 +1,435 @@
 # AFTERBOOT Session Results
 
-## Milestone 1 Implementation Verification
+## Complete Project Context Baseline
 
 - **Date:** 2026-09-26
-- **Status:** Complete; final milestone review approved
-- **Implementation branch:** `feature/m1-runtime-boot-shell`
-- **Implementation commit:** `76e7935da255055ab8289e62f3c4f6d7c7cc917c`
+- **Task type:** Context-only repository and documentation review
+- **Implementation branch inspected:** `main`
+- **Documentation source:** `origin/documentation`
+- **Result:** Complete working context established without changing implementation or remote state
 
-### Automated Verification
+### Repository State
 
-- Formatting, strict TypeScript typecheck, ESLint, and the production build passed.
-- Vitest passed 14 unit/integration tests.
-- Playwright passed 7 Chromium tests.
-- [`AFTERBOOT Build` run 36186067968](https://github.com/ShadowSD10/AFTERBOOT/actions/runs/36186067968) completed successfully for implementation commit `76e7935da255055ab8289e62f3c4f6d7c7cc917c`.
-- Playwright covered staged startup, accessible skip, reduced-motion progression, reset without reload, browser-local clock output, and desktop/mobile layouts.
-- Browser tests reported no console errors or failed network requests.
+The repository was inspected before reviewing project documentation or implementation.
 
-### Browser and Manual Verification
+- Current implementation branch: `main`
+- `HEAD` and `origin/main`: `5593c50bd33a53f977f8255beb63e12bfda512d6`
+- Main commit: `release: promote develop to production (#3)`
+- `origin/develop`: `0135404d61219ac1e3071123179d45911c04e44a`
+- Develop commit: `feat: complete M2 windows and applications (#2)`
+- `origin/documentation`: `4749fa83c6a7bfdecd7464b2d91a2d39356da795`
+- Documentation commit: `docs: record development environment setup`
+- `main` was aligned with `origin/main`.
+- The implementation working tree and index were clean.
 
-Project-owner verification passed for the normal boot experience, sequential boot stages, skip boot, reset, local clock/date accuracy, responsive desktop/mobile behavior, keyboard accessibility, and visual layout without overlap or major issues.
+The relevant remote-tracking references were refreshed with `git fetch`. No branch was changed during the context review, and no remote state was modified.
 
-Manual reduced-motion verification was intentionally not performed. Reduced-motion behavior passed automated Playwright verification and retained a shorter coherent stage sequence.
+The current Git history establishes that M2 was merged into `develop` and subsequently promoted to `main`. Some historical documentation records describe the earlier point at which the verified M2 feature branch had not yet been merged. Those records are historical snapshots and should not be rewritten or treated as evidence that the current repository is still in that earlier state.
 
-### Formal Closure
+## Project Identity
 
-- Final review completed on 2026-09-26, and Milestone 1 was marked complete.
-- The completed evidence includes implementation commit `76e7935`, successful `AFTERBOOT Build` run `36186067968`, all recorded automated checks, and project-owner browser verification.
-- Automated reduced-motion verification passed. Manual reduced-motion verification was not performed, and this qualification remains part of the closure record.
+AFTERBOOT is a browser-based interactive experience in which the user operates a fictional computer. SHADOW OS is the simulated operating system running inside AFTERBOOT.
 
-No Milestone 2 functionality was introduced, and no release or version was created. Milestone 2 is next and remains not started.
+The long-term product has two complementary layers:
 
----
+1. A SHADOW OS sandbox that can be booted, explored, and operated.
+2. Investigation and puzzle scenarios that consume the same OS services and applications rather than replacing the operating system with scenario-specific screens.
 
-## Develop Staging Investigation Results
+The simulation is the product. SHADOW OS must remain a fictional, controlled environment and must not imply access to the user's real operating system, files, processes, accounts, or network.
 
-### Current Setup
+## Current Product State
 
-- Production site: `https://shadowsd10.github.io/AFTERBOOT/`
-- GitHub Pages publishing source: GitHub Actions
-- Production deployment branch: `main`
-- Pages environment: `github-pages`
-- Pages environment branch policy: `main` only
-- `AFTERBOOT Release` deploys only pushes to `main`.
-- `AFTERBOOT Build` validates pushes to both `main` and `develop`, but does not deploy them.
-- Vite emits relative asset paths through `base: "./"`.
+Milestones 0, 1, and 2 are complete. The current `main` branch contains those milestones and represents the deployed AFTERBOOT product.
 
-The latest observed production deployment and both observed build runs completed successfully. Local `main` and `develop` pointed to the same commit at the time of investigation.
+The deployed product currently provides:
 
-### Separate Develop Site Feasibility
+- a static browser host;
+- a staged SHADOW OS boot sequence;
+- a runtime lifecycle with reset, failure, skip, and disposal behavior;
+- a responsive desktop shell;
+- a deterministic and testable clock boundary;
+- a typed event mechanism;
+- DOM-independent window state and management;
+- application registration and lifecycle management;
+- single-instance application behavior;
+- a System Diagnostics proof application;
+- focus and z-order handling;
+- pointer dragging and resizing;
+- minimize, maximize, restore, and close behavior;
+- keyboard-operable launcher and window controls;
+- functional small-screen active-window presentation; and
+- reset and cleanup across runtime, applications, windows, views, listeners, and timers.
 
-A separate live site for `develop` is not available within the current `AFTERBOOT` repository as an independent GitHub Pages site. GitHub supports a maximum of one project Pages site per repository.
+No M3 implementation exists in the current source, tests, or workflows. Milestone 3 is documented as not started.
 
-Additional workflows or GitHub environments would still target the same Pages site. A GitHub environment controls deployment permissions and history; it does not create another Pages URL or hosting target.
+## Runtime and Bootstrap Architecture
 
-A genuinely separate staging site is possible by using a second GitHub repository dedicated to staging.
+The application has one explicit composition root. It constructs and connects:
 
-### Recommended Hosting Approach
+- the browser clock;
+- the SHADOW OS runtime;
+- a sequential ID generator;
+- the window manager;
+- the startup application registry;
+- the application manager; and
+- the shell view.
 
-Create a repository such as:
+The runtime is a DOM-independent state machine with these phases:
 
-- Repository: `ShadowSD10/AFTERBOOT-staging`
-- Site: `https://shadowsd10.github.io/AFTERBOOT-staging/`
+- `startup`
+- `booting`
+- `ready`
+- `resetting`
+- `failed`
 
-The existing production site would remain:
+It owns boot-stage progression, transition validation, scheduled work, skip behavior, reset, failure handling, cancellation, and disposal. The shell renders runtime snapshots but does not own runtime truth.
 
-- `main` → `https://shadowsd10.github.io/AFTERBOOT/`
-- `develop` → `https://shadowsd10.github.io/AFTERBOOT-staging/`
+Global browser error and unhandled-rejection handling provide a static failure fallback if host initialization fails.
 
-The current relative Vite asset paths are compatible with either repository subpath.
+## Shell, Clock, and Events
 
-### Required Future Changes
+The shell projects runtime state into power-on, firmware, initialization, ready-desktop, and failure views.
 
-Implementing the recommended approach would require:
+The desktop provides:
 
-1. Creating the `AFTERBOOT-staging` repository.
-2. Enabling GitHub Pages for that repository.
-3. Adding automation triggered by pushes to `develop`.
-4. Building the `develop` revision and publishing `dist/` to the staging repository.
-5. Configuring narrowly scoped cross-repository authentication, such as a fine-grained token or GitHub App credential stored as an Actions secret.
-6. Keeping the existing `main` production deployment workflow unchanged.
+- an application launcher;
+- an open-window task strip;
+- local time and date;
+- a reset/restart control; and
+- focus synchronization with window state.
 
-These are proposed future changes only; none were implemented during this investigation.
+Time is accessed through an injectable clock boundary. Browser production code uses the local browser clock, while tests can use deterministic fake time.
 
-### Same-Repository Alternative
+Reduced-motion preference changes boot timing without bypassing essential lifecycle states.
 
-A path such as `https://shadowsd10.github.io/AFTERBOOT/develop/` is technically possible if every deployment publishes one combined artifact containing both the production root and a development subdirectory.
+Services own their state and communicate through typed events. Events represent completed facts, while commands request state changes. There is no universal global store.
 
-This is not a separate site. GitHub Pages replaces the complete published artifact on each deployment, so production and staging would share one deployment target and lifecycle.
+## Window Architecture
 
-Supporting this approach would require changing workflow triggers, permitting `develop` to deploy to the `github-pages` environment, assembling both branch builds into every artifact, and coordinating deployments to prevent races.
+`WindowManager` is the single authority for window state. Its model is independent from the DOM and supports:
 
-### Production Risk
+- stable window identity;
+- deterministic centered and cascaded placement;
+- focus order and z-order;
+- constrained movement and resizing;
+- minimize, maximize, restore, and close;
+- active-window recovery;
+- responsive work-area changes; and
+- reset and cleanup.
 
-Deploying `develop` into the existing Pages site could affect production because a development deployment would replace the same artifact that serves the production root. A workflow, packaging, or concurrency error could overwrite or break the live site.
+The window view projects manager snapshots into DOM windows and translates user interaction into manager commands.
 
-A separate staging repository isolates its URL, deployment history, permissions, failures, and generated artifacts from production. Changes to staging automation could still fail independently, but they would not write to the production Pages target.
+Pointer behavior includes:
 
-### Recommendation
+- title-bar dragging;
+- resize-handle interaction;
+- focus on pointer interaction; and
+- window control activation.
 
-Use a dedicated public `AFTERBOOT-staging` repository and deploy `develop` there. This provides:
+Keyboard behavior uses normal focusable controls and navigation. M2 deliberately did not introduce a global window-cycling shortcut, keyboard movement, or keyboard resizing.
 
-- Independent production and staging URLs
-- Independent deployment histories
-- Clear branch-to-environment ownership
-- Failure isolation
-- Static, GitHub-native hosting
-- No staging writes to the production Pages site
+Desktop layouts use floating windows. Small-screen layouts provide a functional active-window presentation rather than claiming full desktop-equivalent interaction.
+
+## Application Architecture
+
+Applications consume explicit public contracts.
+
+The application registry:
+
+- is fixed during startup;
+- rejects duplicate and unknown application IDs;
+- exposes immutable definitions and manifests; and
+- does not support dynamic installation.
 
-### Investigation Scope
+The application manager:
 
-No files, workflows, GitHub Pages settings, commits, branches, tags, releases, or deployments were changed during this investigation.
+- launches registered applications;
+- owns application instance identity and lifecycle;
+- creates primary and scoped auxiliary windows;
+- mounts and disposes application views;
+- applies primary-window close semantics;
+- resets application and window state; and
+- enforces single-instance behavior by restoring or focusing an existing primary window instead of creating another application instance.
+
+The only current registered application is System Diagnostics. It proves the public application contract, single-instance behavior, and owned auxiliary-window lifecycle without introducing filesystem, persistence, process, networking, or scenario capabilities.
+
+## Completed Milestones
+
+### M0 - Foundation
+
+M0 established:
+
+- Vite;
+- strict TypeScript;
+- vanilla TypeScript, DOM, and CSS;
+- ESLint;
+- Prettier;
+- Vitest;
+- Playwright;
+- GitHub Actions build verification;
+- static GitHub Pages deployment; and
+- a minimal responsive host with startup failure fallback.
+
+M0 established the toolchain and static deployment foundation rather than the complete simulated operating system.
+
+### M1 - Runtime and Boot Shell
+
+M1 added:
+
+- the DOM-independent runtime lifecycle;
+- typed runtime snapshots and fact events;
+- the staged boot sequence;
+- the desktop-ready shell;
+- injectable time and deterministic tests;
+- accessible boot skipping;
+- reset without a page reload;
+- failure and disposal behavior;
+- responsive desktop and mobile shell behavior; and
+- reduced-motion timing.
 
----
+M1 deliberately excluded windows, applications, filesystems, processes, persistence, networking, accounts, and scenario functionality.
 
-## Milestone 2 Final Verification and Documentation Synchronization
+### M2 - Windows and Applications
 
-- **Date:** 2026-09-26
-- **Implementation branch:** `feature/m2-windows-applications`
-- **Architecture review commit:** `51d43d68b6b75644fd85abdc322ad3048a9c6d43`
-- **Implementation commit:** `116f01f6e495639f55372588b3981e68a99badcf`
-- **Verified feature head:** `b042dc55f0f1417c049019b3bac2c97a3767b1d8`
-- **Completion status:** Complete; feature branch verified and pushed, documentation synchronized separately
+M2 added:
 
-### Scope Verification
+- serializable DOM-independent window state;
+- one authoritative window manager;
+- deterministic initial placement and cascading;
+- focus and z-order;
+- constrained dragging and resizing;
+- minimize, maximize, restore, and close;
+- responsive work-area handling;
+- desktop floating-window presentation;
+- functional active-window small-screen presentation;
+- a startup-only immutable application registry;
+- application instance and view lifecycle;
+- single-instance applications;
+- stable application and window identities;
+- scoped auxiliary windows;
+- primary-window ownership and disposal semantics;
+- the System Diagnostics proof application;
+- keyboard-operable launcher, task strip, focus, and window controls; and
+- deterministic reset and cleanup behavior.
 
-The complete feature branch was reviewed against `origin/develop`, whose comparison base was `92e4db8409a131eb7e8b5edb1e3085a452031b06`.
+M2 was intentionally limited to proving window and application contracts.
 
-Verified M2 behavior includes:
+## M2 Boundary and Deferred Capabilities
 
-- serializable DOM-independent window state and a single owning window manager;
-- immutable startup-only application registration;
-- single-instance launch, focus-existing behavior, lifecycle, primary-window ownership, and disposal;
-- stable application-instance and window identities;
-- centered first-window placement and deterministic cascading placement;
-- focus and z-order management;
-- pointer dragging and resizing with geometry constraints;
-- minimize, maximize, restore, close, and deterministic focus recovery;
-- desktop floating windows and functional active-window small-screen presentation;
-- keyboard-accessible launcher, task strip, focus, and window controls;
-- one minimal System Diagnostics proof application with scoped auxiliary windows;
-- reset and disposal cleanup without a page reload; and
-- focused unit, integration, and browser coverage.
+The current product does not yet provide:
 
-The review found no virtual filesystem, file manager, text editor, terminal, simulated process service, persistence, accounts, networking, scenarios, backend, real filesystem/machine access, dynamic application installation, multi-instance applications, Alt+Tab-style shortcut, keyboard move/resize, or feature-heavy proof application.
+- a virtual filesystem;
+- a file manager;
+- a text viewer or editor;
+- a terminal;
+- simulated processes or task management;
+- persistent saves;
+- local storage or IndexedDB integration;
+- import or export;
+- user accounts or authentication;
+- simulated networking;
+- investigation or scenario systems;
+- dynamic application installation;
+- multi-instance applications;
+- real filesystem or machine access; or
+- native process execution.
 
-### Architectural Decisions Verified
+These capabilities must not be inferred from architectural discussion alone.
 
-- Window and application lifecycle state remains independent from the DOM.
-- `WindowManager` owns window geometry, modes, focus order, and constraints.
-- `ApplicationRegistry` is fixed at startup.
-- `ApplicationManager` enforces one instance per application and disposes the instance when its primary window closes.
-- An application instance may own scoped auxiliary windows without becoming multi-instance.
-- Application views use the narrow `mount(host, document): Disposable` contract.
-- Pointer capture and responsive presentation remain UI-adapter concerns.
-- M2 intentionally excludes global window-cycling shortcuts and keyboard movement/resizing.
+## Milestone 3
 
-### Automated Verification
+Milestone 3 - Virtual Filesystem and Proof Applications is the next roadmap milestone and is not started.
 
-- Prettier: passed.
-- Strict TypeScript typecheck: passed.
-- ESLint: passed.
-- Vitest: 34 tests passed across 8 files.
-- Production Vite build: passed.
-- Playwright Chromium: 13 tests passed.
-- M2 browser workflows reported no console errors, page errors, or failed requests.
-- The complete branch diff passed whitespace and generated-artifact review.
+Its documented intended scope is:
 
-### Browser and Manual Verification
+- normalized virtual paths;
+- stable filesystem node identity;
+- files, directories, and required metadata;
+- typed lookup, listing, reading, writing, creating, moving, and deleting operations;
+- specific typed filesystem errors;
+- filesystem events emitted only after successful mutations;
+- a storage-neutral, DOM-independent, in-memory implementation;
+- deterministic seeded files and directories;
+- a file manager using the public filesystem contract;
+- a text viewer/editor using the public filesystem contract;
+- supported file-open routing through application registration or file associations; and
+- no direct private-state sharing between proof applications.
 
-Desktop behavior with two simultaneous diagnostic windows was manually inspected and accepted. Floating placement, focus distinction, launcher/task controls, drag/resize, and window chrome remained coherent without overlap blocking normal use.
+M3 must not imply host filesystem access or introduce unrelated later-milestone services.
 
-The 360 × 740 presentation was inspected and exercised successfully. The active window fills the available work area, inactive windows retain state, task controls permit switching, and horizontal overflow was absent. Mobile presentation is functional and supported as a fallback, but it is not a primary UX target for M2.
+Before M3 implementation begins, the filesystem decisions required by the milestone need explicit resolution.
 
-### Feature Branch Result
+## Later Milestones and Future Boundaries
 
-- `feature/m2-windows-applications` was pushed to `origin/feature/m2-windows-applications`.
-- Local and remote feature SHAs matched at `b042dc55f0f1417c049019b3bac2c97a3767b1d8` after push.
-- The feature worktree was clean, with no generated artifacts, screenshots, debug files, or temporary files tracked or untracked.
-- M2 has not been merged into `develop`.
+Later roadmap work may include:
 
-### Completion and Next Milestone
+- simulated process and task visibility;
+- typed in-memory settings;
+- managed system notifications;
+- stronger application-failure isolation;
+- broader accessibility and responsive behavior;
+- scenario foundations and scenario packages;
+- optional persistence;
+- simulated accounts, messages, logs, browser history, and network state;
+- search across simulated resources;
+- a safe virtual terminal; and
+- controlled cross-application protocols.
 
-Milestone 2 is complete. Milestone 3 — Virtual Filesystem and Proof Applications is next after the verified M2 branch is integrated through the normal project workflow.
+A terminal remains deferred unless a stable, safe command boundary is proven. Scenario logic remains isolated from foundational OS implementation and must consume public service contracts.
 
-No pull request, merge, release, version tag, GitHub Release, or deployment was created during final verification and documentation synchronization.
+Future ideas are not current commitments.
 
----
+## Branch Workflow
 
-## Fresh Windows Development Environment Setup and Verification
+The project uses these branch roles:
 
-- **Date:** 2026-09-26
-- **Setup target:** `main` at `5593c50bd33a53f977f8255beb63e12bfda512d6`
-- **Documentation reference:** `origin/documentation` at `34d91746a62f3cdebf375d7d9fec1acfa277cdda`
-- **Result:** Development environment prepared and all existing project quality gates passed
+- `main` - stable production and the source of the live site;
+- `develop` - active integration and development;
+- `feature/*` - implementation branches created from `develop`; and
+- `documentation` - separately maintained documentation and historical reference.
 
-### Documentation and Configuration Reviewed
+The normal implementation flow is:
 
-The setup used the latest relevant material from both the implementation branch and `origin/documentation` without switching or modifying the documentation branch during environment preparation.
+1. Create a feature branch from `develop`.
+2. Implement and validate the feature or milestone.
+3. Review and merge it into `develop`.
+4. Perform integration and acceptance testing.
+5. Promote `develop` through a separate pull request into `main`.
+6. Deploy `main` to production.
 
-Reviewed documentation:
+Implementation branches must not be created from `documentation`. Documentation is maintained separately from implementation branches.
 
-- [`README.md`](../README.md)
-- [`CHANGELOG.md`](../CHANGELOG.md)
-- [`docs/AFTERBOOT_PROJECT.md`](./AFTERBOOT_PROJECT.md)
-- [`docs/AFTERBOOT_MILESTONES.md`](./AFTERBOOT_MILESTONES.md)
-- [`docs/SESSION_RESULTS.md`](./SESSION_RESULTS.md)
+## Development and Verification Workflow
 
-Reviewed implementation configuration:
+The current development environment uses:
 
-- `package.json`
-- `package-lock.json`
-- `tsconfig.json`
-- `vite.config.ts`
-- `eslint.config.js`
-- `playwright.config.ts`
-- `.prettierrc.json`
-- `.gitignore`
-- `.github/workflows/afterboot-build.yml`
-- `.github/workflows/afterboot-release.yml`
+- Vite;
+- TypeScript;
+- vanilla TypeScript, DOM, and CSS;
+- ESLint;
+- Prettier;
+- Vitest;
+- Playwright;
+- GitHub Actions; and
+- GitHub Pages.
 
-The implementation requires Node.js 22.12 or newer and npm 10 or newer. GitHub Actions uses Node.js 22. The documentation branch contained no newer machine-setup requirements and intentionally excludes application source, dependency manifests, build configuration, and workflow files.
+Quality gates include:
 
-The documentation branch still described the verified M2 feature as not merged into `develop`, while the later implementation state showed M2 merged through `develop` and promoted to `main`.
+- formatting verification;
+- strict TypeScript type checking;
+- ESLint;
+- unit tests;
+- integration tests;
+- production build;
+- Playwright browser tests; and
+- responsive, pointer, keyboard, and manual acceptance checks where required.
 
-### Machine Inventory
+Unit coverage includes runtime, typed events, time formatting, the application registry and manager, and window geometry and lifecycle.
 
-| Component | Required | Installed version | Status |
-| --- | --- | --- | --- |
-| Operating system | Windows development host | Windows 11 Enterprise 64-bit, build 26200 | Compatible |
-| Architecture | Supported Node/browser architecture | x64 | Compatible |
-| VS Code | Development editor | 1.139.1 | Installed and working |
-| Git | Repository workflow | 2.55.0.vfs.0.8 | Installed and working |
-| Node.js | `>=22.12.0` | 24.21.0 | Compatible |
-| npm | `>=10` | 11.19.0 | Compatible |
-| npx | Required for local CLI execution | 11.19.0 | Compatible |
-| GitHub CLI | Optional | 2.74.2 | Installed; authentication not configured |
-| Playwright | Browser testing | 1.63.0 | Installed and working |
-| Playwright Chromium | CI browser baseline | Chromium 153.0.8010.12 | Installed and launch verified |
-| Microsoft Edge | Not required | 154.0.4258.37 | Available |
-| Google Chrome | Not required by automated tests | Not installed | Only relevant to optional Chrome DevTools MCP use |
+Integration coverage includes runtime boot behavior and application/window relationships.
 
-Node.js 24.21.0 satisfies the repository and Vite requirement of `^20.19.0 || >=22.12.0`. Replacing it solely to match the CI major version was unnecessary.
+End-to-end coverage includes host startup, staged boot, boot skipping, desktop readiness, restart, local clock output, application launch, window behavior, pointer interaction, keyboard controls, responsive presentation, and cleanup.
 
-An existing portable NVM for Windows installation at `C:\nvm` displayed a `Terminal Only` warning and returned no useful command output. NVM is not a project requirement and was not used for setup. The installed system Node.js runtime was retained.
+The build workflow runs project quality gates. The release workflow builds and deploys generated static output from `main` to GitHub Pages.
 
-### Dependency Installation
+Playwright MCP and Chrome DevTools MCP are developer-machine tools. They are not AFTERBOOT runtime dependencies and must not be added to the project dependency graph because they are available in the development environment.
 
-The repository initially had no `node_modules` directory. The locked dependency tree was installed without changing `package.json`, `package-lock.json`, or dependency versions.
+## Deployment Strategy
 
-The machine's npm configuration used `https://packagefeedproxy.microsoft.io/npm/`. The first clean installation failed because the mirror did not yet contain several newly published locked versions. Direct access to `registry.npmjs.org` also failed during TLS negotiation on this machine.
+AFTERBOOT is deployed as static generated output.
 
-To preserve the repository lockfile and exact package versions:
+- Vite produces the `dist/` artifact.
+- GitHub Actions uploads generated output rather than committing build artifacts.
+- GitHub Pages serves the production site.
+- `main` is the production deployment branch.
+- The runtime requires no backend, database, authentication service, cloud service, or secret.
+- Relative or base-aware assets support repository-subpath hosting.
 
-1. The Microsoft mirror was queried to identify missing locked versions.
-2. Only Windows-compatible missing packages were retrieved from their published CDN contents.
-3. Every downloaded file was checked against the CDN-provided SHA-256 integrity value.
-4. Temporary package tarballs and a temporary lockfile were created outside the repository.
-5. `npm ci` completed in that isolated staging directory.
-6. The resulting dependency tree was copied into the repository.
-7. The staging directory and generated verification artifacts were removed.
-8. The original Microsoft npm registry configuration was restored.
+Development/test MCP artifacts and local reports must remain outside production output.
 
-The final installation contains 160 packages, and `npm ls --depth=0` passed with the expected direct dependencies:
+## Versioning and Releases
 
-- `@eslint/js@9.39.5`
-- `@playwright/test@1.63.0`
-- `@types/node@24.13.6`
-- `eslint@9.39.5`
-- `globals@16.5.0`
-- `prettier@3.9.9`
-- `typescript-eslint@8.70.1`
-- `typescript@5.9.3`
-- `vite@7.3.6`
-- `vitest@3.2.7`
+AFTERBOOT uses Semantic Versioning:
 
-npm reported two moderate advisories in the locked development dependency tree. No audit fix, dependency update, or lockfile regeneration was performed.
+- `MAJOR` represents breaking established contracts or major compatibility changes.
+- `MINOR` represents backward-compatible functionality or a meaningful feature milestone.
+- `PATCH` represents fixes and small non-breaking corrections.
+- `0.x.x` indicates that the product and public contracts are still evolving.
 
-A future clean `npm ci` may continue to fail until the Microsoft mirror synchronizes the locked releases or direct npm registry connectivity is restored. The installed working environment itself is complete and passed all project checks.
+Notable changes remain under `[Unreleased]` in `CHANGELOG.md` until an explicit release is made.
 
-### Browser and Playwright Setup
+The following are separate project events:
 
-The documented Chromium browser was installed with the existing Playwright CLI. The installation added:
+- a commit records source history;
+- milestone completion records roadmap and verification status;
+- a changelog entry records notable work;
+- a Git tag identifies an explicitly versioned source point;
+- a GitHub Release publishes release information around a tag; and
+- production deployment publishes the selected `main` build.
 
-- Chromium 153.0.8010.12
-- Chromium Headless Shell
-- FFmpeg
-- Winldd
+None of these automatically implies the others. A completed milestone or deployed `main` branch does not itself create or require a release, version tag, or GitHub Release.
 
-A direct headless `chromium.launch()` check passed and returned the expected browser version.
+No release should be created or suggested unless explicitly requested.
 
-### MCP and Developer Tooling
+## Architectural Principles
 
-The architecture documentation identifies Playwright MCP and Chrome DevTools MCP as development-only interactive tools. They are not application dependencies or mandatory quality gates.
+Future implementation must preserve these principles:
 
-| Tool | Requirement | Configuration and verification |
-| --- | --- | --- |
-| Playwright MCP | Optional interactive tool | No user or repository MCP configuration was present. The Playwright package, Chromium browser, automated tests, and integrated browser automation were verified independently. |
-| Chrome DevTools MCP | Optional interactive tool | No MCP configuration was present. Google Chrome was not installed; Microsoft Edge was available. |
+1. **Simulation is the product.**
+2. **Domain state remains independent from DOM state.**
+3. **Applications and scenarios consume explicit OS service contracts.**
+4. **Each mutable capability has one clear authority.**
+5. **Commands request changes; events describe completed facts.**
+6. **Modules remain small and cohesive.**
+7. **Deterministic IDs, time, seed data, and behavior are preferred.**
+8. **Accessibility is required behavior, including focus, keyboard use, labels, contrast, reduced motion, and screen-size constraints.**
+9. **The architecture remains static-first and requires no backend.**
+10. **SHADOW OS does not access real machine resources.**
+11. **Scenario logic remains isolated from foundational OS services.**
+12. **Construction uses one composition root and explicit dependency injection without a DI framework.**
+13. **New abstractions are introduced for proven boundaries or planned capabilities rather than speculation.**
 
-No `mcp.json` existed in the VS Code user configuration or repository. No credentials, authentication, or undocumented MCP configuration was fabricated.
+## Current Next Step
 
-### VS Code
+The roadmap identifies Milestone 3 - Virtual Filesystem and Proof Applications as the next milestone.
 
-The implementation branch contained no repository `.vscode` directory and therefore defined no recommended extensions, workspace settings, tasks, or launch configuration.
+M3 has not started, and no M3 implementation currently exists. The filesystem questions necessary for M3 must be decided before implementation.
 
-Fourteen extensions were already installed, including GitHub Copilot, Red Hat YAML, Microsoft C/C++ tooling, .NET runtime support, Dev Box, SARIF Viewer, remote tooling, and the existing Microsoft development extensions. No unrelated extensions were installed.
+Historical records that say M2 still needs to be integrated into `develop` describe the earlier M2 verification point. Current Git references show that M2 has since been integrated into `develop` and promoted to production through `main`.
 
-### Project Verification
+## Open Questions
 
-| Verification | Result |
-| --- | --- |
-| Locked dependency installation | Passed - 160 packages installed |
-| `npm run typecheck` | Passed |
-| `npm run lint` | Passed |
-| `npm run format:check` | Passed |
-| `npm test` | Passed - 34 tests across 8 files |
-| `npm run build` | Passed |
-| `npm run test:e2e` | Passed - 13 Chromium tests |
-| Playwright direct browser launch | Passed |
-| Chromium availability | Passed |
-| Vite development server | Passed - HTTP 200 on loopback |
-| Local AFTERBOOT startup | Passed - reached `Desktop ready` |
-| Browser console errors | None |
-| Browser page errors | None |
-| Failed browser requests | None |
+The following questions remain unresolved:
 
-The Vite development server was stopped after verification. Generated `dist`, `test-results`, Playwright report, and temporary staging artifacts were removed.
+1. Which mobile and tablet interaction modes and layouts will be officially supported?
+2. Should later milestones broaden small-screen behavior beyond M2's functional active-window presentation?
+3. What visual and audio identity should distinguish SHADOW OS without imitating a real operating system?
+4. Does the initial filesystem need permissions, ownership, timestamps, links, mounts, or only files, directories, and basic metadata?
+5. Should initial file contents be strings and JSON only, or should binary blobs be supported in the first filesystem version?
+6. When persistence becomes desirable, should it use local storage, IndexedDB, import/export files, or a combination?
+7. Should scenario packages be JSON data, TypeScript modules bundled at build time, or a validated hybrid?
+8. Is deterministic replay valuable enough to constrain event and time design early?
+9. How should application crashes be isolated and represented inside SHADOW OS?
+10. Which accessibility target and test matrix will be treated as release criteria?
+11. Are audio cues essential to the initial boot experience, and how should browser autoplay restrictions be handled?
+12. Should generated Playwright MCP artifacts be retained only when intentionally captured as test evidence, or ignored by default?
 
-### Git and GitHub State
+The in-memory storage-neutral filesystem and avoidance of URL-based in-OS navigation remain proposed decisions until implemented and validated.
 
-- Current implementation branch during setup: `main`
-- Tracking branch: `origin/main`
-- Remote: `https://github.com/ShadowSD10/AFTERBOOT.git`
-- Fetch from `origin`: successful
-- Git user name and email: configured
-- GitHub CLI authentication: not configured
-- Working tree after setup: clean
-- Local commits ahead of upstream after setup: zero
+## Context Review Verification
 
-Authenticated GitHub CLI operations require a future `gh auth login`. Public repository fetch operations were already working.
+The context review concluded with:
 
-### Integrity Confirmation
+- the implementation working tree clean;
+- the implementation index clean;
+- `main` still checked out;
+- `HEAD` unchanged and aligned with `origin/main`;
+- no files modified or created;
+- no commits created;
+- no branches, tags, releases, pull requests, or deployments created;
+- no pushes or merges;
+- no dependencies installed;
+- no configuration changed; and
+- no remote state changed.
 
-At the end of environment setup:
-
-- no source files were modified;
-- no tests were modified;
-- no project configuration was modified;
-- `package.json` and `package-lock.json` matched `HEAD` exactly;
-- no documentation was modified during the setup operation;
-- no commits were created;
-- nothing was pushed;
-- no branches, pull requests, tags, releases, or deployments were created; and
-- the implementation working tree was clean.
-
-This session-results update was performed afterward as a separate, explicitly requested documentation operation on the `documentation` branch.
+Only the relevant remote-tracking references were refreshed. This context is the baseline for future AFTERBOOT development, while the current repository implementation and dedicated documentation branch remain the source of truth.
