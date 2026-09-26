@@ -184,3 +184,174 @@ The 360 × 740 presentation was inspected and exercised successfully. The active
 Milestone 2 is complete. Milestone 3 — Virtual Filesystem and Proof Applications is next after the verified M2 branch is integrated through the normal project workflow.
 
 No pull request, merge, release, version tag, GitHub Release, or deployment was created during final verification and documentation synchronization.
+
+---
+
+## Fresh Windows Development Environment Setup and Verification
+
+- **Date:** 2026-09-26
+- **Setup target:** `main` at `5593c50bd33a53f977f8255beb63e12bfda512d6`
+- **Documentation reference:** `origin/documentation` at `34d91746a62f3cdebf375d7d9fec1acfa277cdda`
+- **Result:** Development environment prepared and all existing project quality gates passed
+
+### Documentation and Configuration Reviewed
+
+The setup used the latest relevant material from both the implementation branch and `origin/documentation` without switching or modifying the documentation branch during environment preparation.
+
+Reviewed documentation:
+
+- [`README.md`](../README.md)
+- [`CHANGELOG.md`](../CHANGELOG.md)
+- [`docs/AFTERBOOT_PROJECT.md`](./AFTERBOOT_PROJECT.md)
+- [`docs/AFTERBOOT_MILESTONES.md`](./AFTERBOOT_MILESTONES.md)
+- [`docs/SESSION_RESULTS.md`](./SESSION_RESULTS.md)
+
+Reviewed implementation configuration:
+
+- `package.json`
+- `package-lock.json`
+- `tsconfig.json`
+- `vite.config.ts`
+- `eslint.config.js`
+- `playwright.config.ts`
+- `.prettierrc.json`
+- `.gitignore`
+- `.github/workflows/afterboot-build.yml`
+- `.github/workflows/afterboot-release.yml`
+
+The implementation requires Node.js 22.12 or newer and npm 10 or newer. GitHub Actions uses Node.js 22. The documentation branch contained no newer machine-setup requirements and intentionally excludes application source, dependency manifests, build configuration, and workflow files.
+
+The documentation branch still described the verified M2 feature as not merged into `develop`, while the later implementation state showed M2 merged through `develop` and promoted to `main`.
+
+### Machine Inventory
+
+| Component | Required | Installed version | Status |
+| --- | --- | --- | --- |
+| Operating system | Windows development host | Windows 11 Enterprise 64-bit, build 26200 | Compatible |
+| Architecture | Supported Node/browser architecture | x64 | Compatible |
+| VS Code | Development editor | 1.139.1 | Installed and working |
+| Git | Repository workflow | 2.55.0.vfs.0.8 | Installed and working |
+| Node.js | `>=22.12.0` | 24.21.0 | Compatible |
+| npm | `>=10` | 11.19.0 | Compatible |
+| npx | Required for local CLI execution | 11.19.0 | Compatible |
+| GitHub CLI | Optional | 2.74.2 | Installed; authentication not configured |
+| Playwright | Browser testing | 1.63.0 | Installed and working |
+| Playwright Chromium | CI browser baseline | Chromium 153.0.8010.12 | Installed and launch verified |
+| Microsoft Edge | Not required | 154.0.4258.37 | Available |
+| Google Chrome | Not required by automated tests | Not installed | Only relevant to optional Chrome DevTools MCP use |
+
+Node.js 24.21.0 satisfies the repository and Vite requirement of `^20.19.0 || >=22.12.0`. Replacing it solely to match the CI major version was unnecessary.
+
+An existing portable NVM for Windows installation at `C:\nvm` displayed a `Terminal Only` warning and returned no useful command output. NVM is not a project requirement and was not used for setup. The installed system Node.js runtime was retained.
+
+### Dependency Installation
+
+The repository initially had no `node_modules` directory. The locked dependency tree was installed without changing `package.json`, `package-lock.json`, or dependency versions.
+
+The machine's npm configuration used `https://packagefeedproxy.microsoft.io/npm/`. The first clean installation failed because the mirror did not yet contain several newly published locked versions. Direct access to `registry.npmjs.org` also failed during TLS negotiation on this machine.
+
+To preserve the repository lockfile and exact package versions:
+
+1. The Microsoft mirror was queried to identify missing locked versions.
+2. Only Windows-compatible missing packages were retrieved from their published CDN contents.
+3. Every downloaded file was checked against the CDN-provided SHA-256 integrity value.
+4. Temporary package tarballs and a temporary lockfile were created outside the repository.
+5. `npm ci` completed in that isolated staging directory.
+6. The resulting dependency tree was copied into the repository.
+7. The staging directory and generated verification artifacts were removed.
+8. The original Microsoft npm registry configuration was restored.
+
+The final installation contains 160 packages, and `npm ls --depth=0` passed with the expected direct dependencies:
+
+- `@eslint/js@9.39.5`
+- `@playwright/test@1.63.0`
+- `@types/node@24.13.6`
+- `eslint@9.39.5`
+- `globals@16.5.0`
+- `prettier@3.9.9`
+- `typescript-eslint@8.70.1`
+- `typescript@5.9.3`
+- `vite@7.3.6`
+- `vitest@3.2.7`
+
+npm reported two moderate advisories in the locked development dependency tree. No audit fix, dependency update, or lockfile regeneration was performed.
+
+A future clean `npm ci` may continue to fail until the Microsoft mirror synchronizes the locked releases or direct npm registry connectivity is restored. The installed working environment itself is complete and passed all project checks.
+
+### Browser and Playwright Setup
+
+The documented Chromium browser was installed with the existing Playwright CLI. The installation added:
+
+- Chromium 153.0.8010.12
+- Chromium Headless Shell
+- FFmpeg
+- Winldd
+
+A direct headless `chromium.launch()` check passed and returned the expected browser version.
+
+### MCP and Developer Tooling
+
+The architecture documentation identifies Playwright MCP and Chrome DevTools MCP as development-only interactive tools. They are not application dependencies or mandatory quality gates.
+
+| Tool | Requirement | Configuration and verification |
+| --- | --- | --- |
+| Playwright MCP | Optional interactive tool | No user or repository MCP configuration was present. The Playwright package, Chromium browser, automated tests, and integrated browser automation were verified independently. |
+| Chrome DevTools MCP | Optional interactive tool | No MCP configuration was present. Google Chrome was not installed; Microsoft Edge was available. |
+
+No `mcp.json` existed in the VS Code user configuration or repository. No credentials, authentication, or undocumented MCP configuration was fabricated.
+
+### VS Code
+
+The implementation branch contained no repository `.vscode` directory and therefore defined no recommended extensions, workspace settings, tasks, or launch configuration.
+
+Fourteen extensions were already installed, including GitHub Copilot, Red Hat YAML, Microsoft C/C++ tooling, .NET runtime support, Dev Box, SARIF Viewer, remote tooling, and the existing Microsoft development extensions. No unrelated extensions were installed.
+
+### Project Verification
+
+| Verification | Result |
+| --- | --- |
+| Locked dependency installation | Passed - 160 packages installed |
+| `npm run typecheck` | Passed |
+| `npm run lint` | Passed |
+| `npm run format:check` | Passed |
+| `npm test` | Passed - 34 tests across 8 files |
+| `npm run build` | Passed |
+| `npm run test:e2e` | Passed - 13 Chromium tests |
+| Playwright direct browser launch | Passed |
+| Chromium availability | Passed |
+| Vite development server | Passed - HTTP 200 on loopback |
+| Local AFTERBOOT startup | Passed - reached `Desktop ready` |
+| Browser console errors | None |
+| Browser page errors | None |
+| Failed browser requests | None |
+
+The Vite development server was stopped after verification. Generated `dist`, `test-results`, Playwright report, and temporary staging artifacts were removed.
+
+### Git and GitHub State
+
+- Current implementation branch during setup: `main`
+- Tracking branch: `origin/main`
+- Remote: `https://github.com/ShadowSD10/AFTERBOOT.git`
+- Fetch from `origin`: successful
+- Git user name and email: configured
+- GitHub CLI authentication: not configured
+- Working tree after setup: clean
+- Local commits ahead of upstream after setup: zero
+
+Authenticated GitHub CLI operations require a future `gh auth login`. Public repository fetch operations were already working.
+
+### Integrity Confirmation
+
+At the end of environment setup:
+
+- no source files were modified;
+- no tests were modified;
+- no project configuration was modified;
+- `package.json` and `package-lock.json` matched `HEAD` exactly;
+- no documentation was modified during the setup operation;
+- no commits were created;
+- nothing was pushed;
+- no branches, pull requests, tags, releases, or deployments were created; and
+- the implementation working tree was clean.
+
+This session-results update was performed afterward as a separate, explicitly requested documentation operation on the `documentation` branch.
