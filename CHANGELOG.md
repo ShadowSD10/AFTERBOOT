@@ -24,6 +24,7 @@ All notable changes to AFTERBOOT are documented here.
 
 ### Changed
 
+- Intentionally revised the post-M2 roadmap so Milestone 3 focuses on applications and OS experience, Milestone 4 introduces the shared virtual filesystem and coherent sandbox, and Milestone 5 continues with scenario foundations.
 - Replaced the static ready-desktop projection with a disposable desktop/window projection composed from explicit application and window services.
 - Adopted startup-only registration, single-instance applications, primary-window disposal, pointer-only move/resize, no global window-cycling shortcut, and active-window small-screen presentation for M2.
 - Replaced the Milestone 0 static host projection with a disposable shell view driven by runtime snapshots.

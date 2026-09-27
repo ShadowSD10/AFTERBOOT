@@ -1,8 +1,8 @@
 # AFTERBOOT Project Specification
 
 > **Status:** Living architectural reference  
-> **Last updated:** 2026-09-26  
-> **Current stage:** Milestones 0, 1, and 2 are complete; Milestone 3 is next. The verified M2 feature branch has not yet been merged into `develop`
+> **Last updated:** 2026-09-27
+> **Current stage:** Milestones 0, 1, and 2 are complete and deployed; Milestone 3 — Applications + OS Experience is next and has not started
 
 ## Status vocabulary
 
@@ -47,7 +47,7 @@ Initial goals are:
 - Keyboard, pointer, responsive-layout, and basic accessibility behavior designed as part of the shell rather than added after it.
 - A deterministic demo state suitable for automated testing.
 
-Suggested proof applications are a file manager and text viewer/editor because together they exercise application launch, windows, filesystem reads, shared resources, and file associations. A terminal should follow only after a stable command/service boundary exists.
+Milestone 3 adds a focused Notepad, Calculator, and Clock plus an application drawer and SHADOW OS context menus to make the existing shell useful before storage is introduced. Notepad remains intentionally temporary and in memory during M3. Milestone 4 then introduces the shared virtual filesystem and filesystem-backed application workflows; applications must not invent private persistence in the meantime. A terminal should follow only after a stable command/service boundary exists.
 
 ### Phase 1 non-goals
 
@@ -177,7 +177,7 @@ No UI technology is permanently mandated at this stage.
 | Event system               | Implemented (M1 base)   | Provides typed, synchronous domain notifications with explicit subscription disposal.                             |
 | Window manager             | Implemented (M2 base)   | Owns windows, focus order, geometry, modes, constraints, and lifecycle transitions.                               |
 | Application framework      | Implemented (M2 base)   | Defines immutable startup manifests, launch requests, single instances, scoped windows, and disposal.             |
-| Virtual filesystem         | Proposed                | Owns paths, nodes, file contents, metadata, directory operations, and filesystem events.                          |
+| Virtual filesystem         | Proposed for M4         | Owns paths, nodes, file contents, metadata, directory operations, and filesystem events.                          |
 | Process/task service       | Proposed, later Phase 1 | Tracks running application instances and simulated system tasks; it does not represent real browser/OS processes. |
 | Shell                      | Partial (M2 shell)      | Renders boot/desktop surfaces, launcher, task strip, application windows, and keyboard/pointer focus behavior.    |
 | Settings/configuration     | Proposed                | Stores typed runtime preferences and system configuration, initially in memory.                                   |
@@ -355,7 +355,7 @@ Keep tests near modules if that proves easier to maintain; the exact test layout
 
 ### Milestone 2 — windows and applications
 
-**Status:** Complete as of 2026-09-26. Implemented, locally verified, manually accepted for desktop behavior, and pushed on `feature/m2-windows-applications`; not yet merged into `develop`.
+**Status:** Complete as of 2026-09-26. Implemented, locally verified, manually accepted for desktop behavior, integrated through `develop`, and deployed from `main`.
 
 - Implement window state transitions independently of the DOM.
 - Add focus, movement, resize, minimize, maximize, restore, and close behavior.
@@ -364,21 +364,28 @@ Keep tests near modules if that proves easier to maintain; the exact test layout
 
 **Exit criterion:** Multiple application windows can be operated through pointer input and keyboard-accessible controls with tested state transitions. M2 applications are single-instance; the diagnostic instance proves simultaneous primary and auxiliary windows.
 
-### Milestone 3 — virtual filesystem and proof applications
+### Milestone 3 — applications + OS experience
 
-- Implement an in-memory virtual filesystem with seed data and typed errors.
-- Build a file manager and text viewer/editor against the filesystem contract.
-- Add file-open routing through application registration.
+**Status:** Not started. This milestone was intentionally redefined after M2.
 
-**Exit criterion:** A user can navigate, open, edit, and revisit a virtual text file without applications sharing private state.
+- Add focused Notepad, Calculator, and Clock applications through the existing application framework.
+- Keep Notepad text temporary and in memory, with no save, open, persistence, or filesystem behavior.
+- Add a keyboard-accessible application drawer that derives installed applications from the existing registry and launches them through the application manager.
+- Keep the task strip focused on running windows rather than using it as a permanent catalog of installed applications.
+- Add extensible SHADOW OS context menus with meaningful desktop actions such as refreshing simulated desktop state and opening the application drawer.
+- Keep the existing System Diagnostics application available.
 
-### Milestone 4 — coherent sandbox
+**Exit criterion:** SHADOW OS provides a coherent, accessible way to discover, launch, and use its focused applications and desktop actions without introducing persistence, a filesystem, or application-private OS capabilities.
 
-- Add task/process visibility, settings, notifications, and selected shell polish.
-- Consider a terminal only after defining safe virtual commands over OS services.
-- Improve small-screen behavior, accessibility, performance, and recovery from app failures.
+### Milestone 4 — virtual filesystem + coherent sandbox
 
-**Exit criterion:** The sandbox feels coherent, remains stable with several open apps, and passes the agreed quality gates.
+- Introduce a shared, storage-neutral virtual filesystem as an OS capability.
+- Expose filesystem behavior to applications through explicit public service contracts.
+- Add coherent filesystem-backed workflows such as file management and Notepad open/save.
+- Add only the selected application and shell integrations needed to prove that applications share one simulated computer.
+- Improve sandbox stability, accessibility, responsive behavior, and application-failure recovery as required by those workflows.
+
+**Exit criterion:** Applications consume one shared virtual filesystem through public OS contracts, and the sandbox supports coherent file workflows without private application storage or DOM coupling.
 
 ### Milestone 5 — scenario foundation
 
@@ -484,9 +491,9 @@ These questions should be answered near the milestone where they matter:
 1. Which mobile/tablet interaction modes and layouts will be officially supported by the interactive shell?
 2. Should later milestones broaden small-screen behavior beyond M2's functional active-window presentation?
 3. What visual and audio identity should distinguish SHADOW OS without imitating a real OS?
-4. Does the initial filesystem need permissions, ownership, timestamps, links, mounts, or only files/directories and basic metadata?
-5. Should file contents be strings/JSON initially, or should binary blobs be supported from the first filesystem version?
-6. When persistence becomes desirable, should it be opt-in local storage, IndexedDB, import/export files, or a combination?
+4. For M4, does the initial filesystem need permissions, ownership, timestamps, links, mounts, or only files/directories and basic metadata?
+5. For M4, should file contents be strings/JSON initially, or should binary blobs be supported from the first filesystem version?
+6. If persistence beyond the in-memory M4 filesystem becomes desirable, should it be opt-in local storage, IndexedDB, import/export files, or a combination?
 7. Are scenario packages authored as JSON data, TypeScript modules bundled at build time, or a validated hybrid?
 8. Is deterministic replay valuable enough to constrain event and time design early?
 9. How should application crashes be isolated and represented inside the fictional OS?
@@ -515,4 +522,4 @@ Future features must preserve the static-runtime constraint unless the project's
 
 ## Immediate next step
 
-Integrate the verified M2 feature branch into `develop` through the normal project workflow, then begin **Milestone 3 — Virtual Filesystem and Proof Applications** from its not-started checklist in `docs/AFTERBOOT_MILESTONES.md`. No merge, release, or version tag was created during M2 documentation closure.
+Plan **Milestone 3 — Applications + OS Experience** from its revised not-started checklist in `docs/AFTERBOOT_MILESTONES.md`. Preserve the M2 application/window contracts, and do not introduce filesystem or persistence behavior before Milestone 4.

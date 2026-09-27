@@ -21,6 +21,6 @@ This branch is not an application development branch and is not a deployment bra
 
 Milestone 2 — Windows and Applications is complete. The implementation and full feature-branch diff passed local formatting, strict TypeScript, ESLint, Vitest, production build, Playwright, scope, and artifact verification. Desktop behavior was manually accepted; mobile presentation is functional but is not a primary UX target.
 
-The verified implementation is available at `origin/feature/m2-windows-applications` with feature head `b042dc55f0f1417c049019b3bac2c97a3767b1d8` and implementation commit `116f01f6e495639f55372588b3981e68a99badcf`. It has not yet been merged into `develop`.
+The M2 implementation has been integrated through `develop`, promoted to `main`, and deployed. The verified feature head was `b042dc55f0f1417c049019b3bac2c97a3767b1d8`, with implementation commit `116f01f6e495639f55372588b3981e68a99badcf`.
 
-Milestone 3 — Virtual Filesystem and Proof Applications is next. No M2 release, version tag, or GitHub Release has been created.
+The roadmap was intentionally revised after M2. Milestone 3 — Applications + OS Experience is next and is not started. It adds focused in-memory applications, an application drawer, and SHADOW OS context menus without introducing a virtual filesystem or persistence. The shared virtual filesystem now belongs to Milestone 4 — Virtual Filesystem + Coherent Sandbox. No version tag or GitHub Release has been created.

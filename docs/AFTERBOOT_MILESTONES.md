@@ -1,8 +1,8 @@
 # AFTERBOOT Milestones
 
 > **Document type:** Living implementation gate  
-> **Last reviewed:** 2026-09-26  
-> **Current milestone:** Milestone 3 — Virtual Filesystem and Proof Applications (not started)
+> **Last reviewed:** 2026-09-27
+> **Current milestone:** Milestone 3 — Applications + OS Experience (not started)
 > **Production branch:** `main`  
 > **Development branch:** `develop`  
 > **Release status:** Pre-v1.0; `v0.1.0` has not been created
@@ -222,42 +222,50 @@ When work progresses:
 
 ---
 
-## Milestone 3 — Virtual Filesystem and Proof Applications
+## Milestone 3 — Applications + OS Experience
 
 **Status:** ⬜ Not started  
-**Purpose:** Add a storage-neutral in-memory virtual filesystem and prove its application-facing contract with file management and text editing workflows.  
+**Purpose:** Make SHADOW OS feel like a usable simulated operating system through focused applications, application discovery, and native-feeling desktop actions without introducing storage or persistence.
 **Dependencies/prerequisites:** Milestone 2 must be `✅ Complete`; application registration, lifecycle, and window behavior must be stable.
 
 ### Scope and implementation requirements
 
-- [ ] Define normalized virtual paths, stable node identity, files, directories, and required metadata.
-- [ ] Implement typed lookup, listing, reading, writing, creating, moving, and deleting operations.
-- [ ] Provide specific typed errors for invalid filesystem operations.
-- [ ] Emit filesystem events only after successful mutations.
-- [ ] Keep the filesystem independent from DOM and browser storage implementations.
-- [ ] Seed deterministic initial files and directories through runtime composition.
-- [ ] Build a file manager against the public filesystem contract.
-- [ ] Build a text viewer/editor against the public filesystem contract.
-- [ ] Route supported file-open actions through application registration or file associations.
-- [ ] Avoid direct private-state sharing between proof applications.
+- [ ] Add Notepad through the existing application registry and manager with basic text entry, selection, and editing.
+- [ ] Keep Notepad content temporary and in memory; closing it may discard its contents.
+- [ ] Do not add Notepad save/open behavior, persistent application data, or any temporary or application-specific filesystem.
+- [ ] Add a basic Calculator for standard arithmetic without calculation history or scientific-mode requirements.
+- [ ] Add a small digital Clock with basic date/time presentation using the established clock abstraction.
+- [ ] Keep the existing System Diagnostics application available as the diagnostic/proof application.
+- [ ] Add a keyboard-accessible application drawer that derives installed applications from `ApplicationRegistry` and launches them through `ApplicationManager`.
+- [ ] Keep the task strip focused on running windows rather than displaying every installed application permanently.
+- [ ] Intercept browser `contextmenu` behavior within appropriate simulated OS surfaces and render a SHADOW OS context menu instead.
+- [ ] Make context-menu definitions and invocation extensible for future context-specific menus without coupling domain state to DOM elements.
+- [ ] Provide a small initial desktop menu with meaningful commands such as Refresh Desktop and Open App Drawer.
+- [ ] Make Refresh Desktop operate on simulated desktop/OS state without reloading the browser page.
+- [ ] Keep application and shell behavior behind existing OS contracts with one owner per capability and deterministic behavior where testing requires it.
+- [ ] Keep virtual filesystems, File Manager, file saving/loading, persistent application data, browser, email, Image Viewer, Settings application, themes, calendar, tasks, terminal, scenarios, networking, accounts, and backend/cloud behavior out of M3.
 
 ### Required tests and verification
 
-- [ ] Unit tests cover path normalization, traversal rules, CRUD/move operations, metadata changes, errors, and events.
-- [ ] Unit tests use deterministic IDs and time where relevant.
-- [ ] Integration tests cover file-open routing and edits observed across application instances.
-- [ ] Playwright verifies directory navigation, opening a seeded text file, editing it, and revisiting the updated content.
-- [ ] Playwright verifies keyboard operation and filesystem error presentation for critical paths.
+- [ ] Unit tests cover deterministic Notepad state, Calculator operations and invalid input handling, and Clock formatting where logic exists outside views.
+- [ ] Integration tests cover registry-backed application discovery and launching each M3 application through the existing application manager.
+- [ ] Integration tests cover simulated desktop refresh and context-menu commands without page reload or browser-native state ownership.
+- [ ] Playwright verifies opening and using Notepad, Calculator, Clock, and the existing System Diagnostics application.
+- [ ] Playwright verifies keyboard access to the application drawer, application launch, context-menu actions, and focus recovery.
+- [ ] Browser verification confirms the native context menu is suppressed only within intended SHADOW OS surfaces and no unexpected page reload occurs.
+- [ ] Accessibility and responsive verification cover the application drawer, context menu, and critical application workflows.
 - [ ] Typecheck, lint, formatting, tests, production build, and browser verification pass.
 
 ### Definition of Done
 
-- [ ] A user can navigate, open, edit, and revisit a virtual text file through normal SHADOW OS interactions.
-- [ ] Applications use filesystem and application-framework contracts without private coupling.
-- [ ] The filesystem remains an in-memory simulation and does not imply host filesystem access.
+- [ ] A user can discover and launch installed applications through a coherent application drawer rather than a permanent taskbar catalog.
+- [ ] Notepad, Calculator, and Clock provide their intentionally small functional workflows through the established application/window architecture.
+- [ ] SHADOW OS context menus replace the browser-native menu in intended OS surfaces and dispatch extensible simulated OS commands.
+- [ ] Application, launcher, and context-menu state remains independent from DOM state where it represents simulation behavior.
+- [ ] No application-specific persistence or filesystem substitute bypasses the planned shared M4 virtual filesystem.
 - [ ] All Milestone 3 checks and required automated/browser verification pass.
 - [ ] The production build passes and no known blocking issue remains.
-- [ ] Open filesystem questions needed by the implementation have explicit decisions; unrelated future capabilities remain deferred.
+- [ ] Scope review confirms all explicitly deferred applications, services, persistence, and scenario behavior remain out of M3.
 - [ ] Milestone 3 has been reviewed and approved before Milestone 4 begins.
 
 ### Completion record
@@ -269,43 +277,43 @@ When work progresses:
 
 ---
 
-## Milestone 4 — Coherent Sandbox
+## Milestone 4 — Virtual Filesystem + Coherent Sandbox
 
 **Status:** ⬜ Not started  
-**Purpose:** Turn the proven runtime, windows, applications, and filesystem into a stable, coherent SHADOW OS sandbox.  
-**Dependencies/prerequisites:** Milestone 3 must be `✅ Complete`; core application and filesystem workflows must be reliable.
+**Purpose:** Introduce one shared virtual filesystem as an OS capability and use it to make applications participate in a coherent simulated computer.
+**Dependencies/prerequisites:** Milestone 3 must be `✅ Complete`; focused applications, application discovery, context menus, and existing window/application contracts must be stable.
 
 ### Scope and implementation requirements
 
-- [ ] Add simulated process/task visibility tied to application instances and windows.
-- [ ] Support controlled termination through simulation APIs without claiming access to host processes.
-- [ ] Add typed in-memory settings/configuration required by the sandbox.
-- [ ] Add structured system notifications with a managed visible lifecycle.
-- [ ] Integrate selected shell surfaces needed for coherent repeated use.
-- [ ] Improve responsive behavior, keyboard navigation, focus handling, contrast, labels, and reduced-motion behavior.
-- [ ] Isolate and visibly recover from application failures where practical.
-- [ ] Validate stability with several applications open simultaneously.
-- [ ] Evaluate whether a terminal is justified by a stable safe-command boundary; keep it deferred unless that boundary is proven.
+- [ ] Define a shared, storage-neutral virtual filesystem contract with normalized paths, stable node identity, files, directories, required metadata, typed errors, and mutation events.
+- [ ] Keep filesystem state independent from DOM state, browser storage, and application-private storage.
+- [ ] Construct and seed the filesystem through runtime composition with deterministic IDs, time, and initial data where testing requires them.
+- [ ] Expose only approved filesystem capabilities to applications through public OS service contracts.
+- [ ] Select a narrow set of filesystem-backed workflows that prove shared resources without committing to every possible application; candidates include File Manager and Notepad open/save.
+- [ ] Ensure filesystem changes made through one application are coherently observable through other authorized applications.
+- [ ] Improve responsive behavior, accessibility, stability, and application-failure recovery where required by the filesystem-backed workflows.
+- [ ] Keep browser persistence optional and separate from the initial shared in-memory filesystem unless explicitly decided during M4 planning.
 - [ ] Keep scenario infrastructure and scenario-specific behavior out of this milestone.
 
 ### Required tests and verification
 
-- [ ] Unit tests cover process lifecycle, settings behavior, and notification lifecycle.
-- [ ] Integration tests cover application/window/process relationships, termination, settings, notifications, and failure recovery.
-- [ ] Playwright verifies repeated multi-application workflows with several windows open.
-- [ ] Accessibility verification covers critical keyboard paths, focus behavior, labels, contrast, and reduced motion.
-- [ ] Responsive browser verification covers the supported small-screen behavior selected for the shell.
-- [ ] Performance investigation finds no blocking degradation in representative sandbox use.
+- [ ] Unit tests cover path normalization, traversal rules, filesystem operations, metadata changes, typed errors, and events.
+- [ ] Unit tests use deterministic IDs and time where relevant.
+- [ ] Integration tests cover the selected applications sharing filesystem state only through public contracts.
+- [ ] Playwright verifies the selected filesystem-backed workflows and observes updated shared file state across application boundaries where relevant.
+- [ ] Playwright verifies critical keyboard paths and filesystem error presentation.
+- [ ] Accessibility and responsive verification cover the selected filesystem-backed workflows.
 - [ ] Typecheck, lint, formatting, tests, production build, and browser verification pass.
 
 ### Definition of Done
 
-- [ ] The sandbox feels coherent rather than like disconnected UI mockups.
-- [ ] Several applications remain stable and operable together.
-- [ ] Process/task, settings, notifications, and shell behavior use explicit service boundaries.
-- [ ] Accessibility, responsive behavior, performance, and application failure recovery meet the agreed release criteria.
+- [ ] Applications consume one shared virtual filesystem through public OS contracts without private data stores or coupling.
+- [ ] A user can complete the selected shared file workflows through normal SHADOW OS interactions.
+- [ ] The filesystem remains a simulated OS capability and does not imply access to the host filesystem.
+- [ ] The resulting sandbox feels coherent rather than like disconnected application mockups.
 - [ ] All Milestone 4 checks and required automated/browser verification pass.
 - [ ] The production build passes and no known blocking issue remains.
+- [ ] Open filesystem questions needed by the implementation have explicit decisions; unrelated future capabilities remain deferred.
 - [ ] Scope review confirms that scenario infrastructure was not introduced prematurely.
 - [ ] Milestone 4 has been reviewed and approved before Milestone 5 begins.
 
@@ -322,7 +330,7 @@ When work progresses:
 
 **Status:** ⬜ Not started  
 **Purpose:** Prove that investigation gameplay can configure and observe SHADOW OS through public system contracts without replacing the OS with scenario-specific screens.  
-**Dependencies/prerequisites:** Milestone 4 must be `✅ Complete`; foundational OS contracts must be stable and scenario requirements must be documented from the completed sandbox.
+**Dependencies/prerequisites:** Milestone 4 must be `✅ Complete`; the coherent filesystem-backed OS sandbox and its public contracts must be stable, and scenario requirements must be documented from that completed sandbox.
 
 ### Scope and implementation requirements
 
@@ -376,15 +384,18 @@ These items come from unresolved or deliberately flexible areas in the project s
 - Which mobile/tablet interaction mode should the shell support?
 - What visual identity should distinguish SHADOW OS without imitating a real operating system?
 
-### Milestone 3 and filesystem
+### Milestone 3 applications + OS experience
+
+- Which exact basic Calculator operations and error states are required?
+- What simulated state should Refresh Desktop reset or recompute without reloading the page?
+- Does the first context-menu model need only desktop commands, or a generic command-provider boundary ready for later context-specific menus?
+
+### Milestone 4 filesystem + coherent sandbox
 
 - Which metadata fields are required initially beyond files, directories, stable IDs, and content revisions?
 - Are permissions, ownership, links, mounts, binary blobs, or recoverable deletion required later?
-- If persistence is eventually added, should it use local storage, IndexedDB, import/export, or a combination?
-
-### Milestone 4 and sandbox
-
-- Is a terminal necessary for the coherent sandbox, or should it remain deferred?
+- If browser persistence is eventually added, should it use local storage, IndexedDB, import/export, or a combination?
+- Which filesystem-backed workflows should prove the coherent sandbox: File Manager, Notepad open/save, Image Viewer, shared application data, or another narrow combination?
 - What measurable accessibility, performance, and application-failure recovery criteria gate sandbox completion?
 
 ### Milestone 5 and scenarios

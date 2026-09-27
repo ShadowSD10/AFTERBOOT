@@ -433,3 +433,26 @@ The context review concluded with:
 - no remote state changed.
 
 Only the relevant remote-tracking references were refreshed. This context is the baseline for future AFTERBOOT development, while the current repository implementation and dedicated documentation branch remain the source of truth.
+
+---
+
+## Post-M2 Roadmap Revision
+
+- **Date:** 2026-09-27
+- **Task type:** Documentation-only roadmap decision
+- **Branch:** `documentation`
+- **Decision status:** Adopted; implementation not started
+
+After M2, the roadmap was intentionally revised to establish useful applications and shell interactions before introducing storage. This entry supersedes the prospective Milestone 3 and Current Next Step sections in the earlier Complete Project Context Baseline while preserving that baseline as a historical record. The former M3 — Virtual Filesystem and Proof Applications plan no longer describes the active roadmap.
+
+The revised sequence after M2 is:
+
+- M3 — Applications + OS Experience;
+- M4 — Virtual Filesystem + Coherent Sandbox; and
+- M5 — Scenario Foundation.
+
+M3 now plans focused Notepad, Calculator, and Clock applications, retains System Diagnostics, and adds a registry-backed application drawer plus extensible SHADOW OS context menus. Notepad content is temporary and in memory during M3. M3 does not include saving, loading, persistence, a virtual filesystem, File Manager, or the other explicitly deferred applications and services.
+
+M4 now owns the shared virtual filesystem as an OS capability. It will enable coherent filesystem-backed behavior such as File Manager and Notepad open/save through public service contracts rather than application-private storage. Detailed M4 choices remain deferred until that milestone is planned.
+
+M5 remains Scenario Foundation and now explicitly depends on the coherent filesystem-backed sandbox established by M4. No M3 implementation, version change, tag, release, branch, pull request, merge, or deployment was created as part of this roadmap decision.
