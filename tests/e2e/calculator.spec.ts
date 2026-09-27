@@ -106,6 +106,66 @@ test("performs basic pointer calculations through one Calculator instance", asyn
   expect(failures).toEqual([]);
 });
 
+test("projects pending operations into the display and selected operator", async ({ page }) => {
+  const failures = await openDesktop(page);
+  await launchCalculator(page);
+
+  const calculator = page.getByRole("dialog", { name: "Calculator" });
+  const display = calculator.getByLabel("Calculator display");
+  const pendingDisplay = calculator.locator(".calculator-app__pending");
+  const operators = [
+    { name: "Add", symbol: "+" },
+    { name: "Subtract", symbol: "−" },
+    { name: "Multiply", symbol: "×" },
+    { name: "Divide", symbol: "÷" },
+  ] as const;
+
+  await expect(calculator).not.toContainText("SHADOW / CALCULATOR");
+  await expect(calculator).not.toContainText("4-OP");
+
+  for (const operator of operators) {
+    await pressKeys(page, ["Clear", "1", "2", operator.name]);
+    await expect(pendingDisplay).toHaveText(`12 ${operator.symbol}`);
+    await expect(calculator.getByRole("button", { name: operator.name })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  }
+
+  await pressKeys(page, ["Clear", "1", "2", "Add"]);
+  const add = calculator.getByRole("button", { name: "Add" });
+  const multiply = calculator.getByRole("button", { name: "Multiply" });
+  await multiply.click();
+  await expect(display).toHaveText("12");
+  await expect(pendingDisplay).toHaveText("12 ×");
+  await expect(add).toHaveAttribute("aria-pressed", "false");
+  await expect(multiply).toHaveAttribute("aria-pressed", "true");
+
+  await pressKeys(page, ["2", "0"]);
+  await expect(display).toHaveText("20");
+  await expect(pendingDisplay).toHaveText("12 ×");
+  await calculator.getByRole("button", { name: "Equals" }).click();
+  await expect(display).toHaveText("240");
+  await expect(pendingDisplay).toBeEmpty();
+  await expect(multiply).toHaveAttribute("aria-pressed", "false");
+
+  await pressKeys(page, ["1", "2", "Subtract", "Clear"]);
+  await expect(pendingDisplay).toBeEmpty();
+  await expect(calculator.getByRole("button", { name: "Subtract" })).toHaveAttribute(
+    "aria-pressed",
+    "false",
+  );
+
+  await pressKeys(page, ["9", "Divide", "0", "Equals"]);
+  await expect(display).toHaveText("ERROR");
+  await expect(pendingDisplay).toBeEmpty();
+  await expect(calculator.getByRole("button", { name: "Divide" })).toHaveAttribute(
+    "aria-pressed",
+    "false",
+  );
+  expect(failures).toEqual([]);
+});
+
 test("supports calculator keyboard input, restart, and the mobile viewport", async ({ page }) => {
   const failures = monitorPageFailures(page);
   await page.setViewportSize({ width: 360, height: 740 });
@@ -116,11 +176,19 @@ test("supports calculator keyboard input, restart, and the mobile viewport", asy
   const calculator = page.getByRole("dialog", { name: "Calculator" });
   const surface = calculator.locator(".calculator-app");
   const display = calculator.getByLabel("Calculator display");
+  const pendingDisplay = calculator.locator(".calculator-app__pending");
   await expect(surface).toBeFocused();
 
-  await page.keyboard.type("12+5");
+  await page.keyboard.type("12+");
+  await expect(pendingDisplay).toHaveText("12 +");
+  await expect(calculator.getByRole("button", { name: "Add" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await page.keyboard.type("5");
   await page.keyboard.press("Enter");
   await expect(display).toHaveText("17");
+  await expect(pendingDisplay).toBeEmpty();
 
   await page.keyboard.press("Escape");
   await expect(display).toHaveText("0");

@@ -30,6 +30,7 @@ describe("CalculatorModel", () => {
 
     expect(model.display).toBe("0");
     expect(model.hasError).toBe(false);
+    expect(model.pendingOperation).toBeNull();
 
     enter(model, "1205");
     expect(model.display).toBe("1205");
@@ -99,6 +100,52 @@ describe("CalculatorModel", () => {
     model.equals();
 
     expect(model.display).toBe("24");
+  });
+
+  it.each([
+    ["add", "12"],
+    ["subtract", "12"],
+    ["multiply", "12"],
+    ["divide", "12"],
+  ] as const)("exposes the stored operand and pending %s operation", (operator, operand) => {
+    const model = new CalculatorModel();
+    enter(model, operand);
+
+    model.chooseOperator(operator);
+
+    expect(model.pendingOperation).toEqual({ operand, operator });
+  });
+
+  it("projects operator replacement without evaluating prematurely", () => {
+    const model = new CalculatorModel();
+    enter(model, "12");
+    model.chooseOperator("add");
+
+    model.chooseOperator("multiply");
+
+    expect(model.display).toBe("12");
+    expect(model.pendingOperation).toEqual({ operand: "12", operator: "multiply" });
+  });
+
+  it("clears the pending projection on clear, equals, and errors", () => {
+    const model = new CalculatorModel();
+    enter(model, "12");
+    model.chooseOperator("add");
+    model.clear();
+    expect(model.pendingOperation).toBeNull();
+
+    enter(model, "12");
+    model.chooseOperator("add");
+    enter(model, "5");
+    model.equals();
+    expect(model.pendingOperation).toBeNull();
+
+    model.clear();
+    enter(model, "9");
+    model.chooseOperator("divide");
+    enter(model, "0");
+    model.equals();
+    expect(model.pendingOperation).toBeNull();
   });
 
   it("repeats the last equals operation", () => {

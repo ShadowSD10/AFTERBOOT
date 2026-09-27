@@ -51,6 +51,15 @@ const CALCULATOR_KEYS: readonly CalculatorKey[] = [
   { label: ".", name: "Decimal point", command: "decimal", kind: "digit", shortcuts: "." },
 ];
 
+const OPERATOR_PRESENTATION: Readonly<
+  Record<CalculatorOperator, { readonly symbol: string; readonly name: string }>
+> = {
+  add: { symbol: "+", name: "plus" },
+  subtract: { symbol: "−", name: "minus" },
+  multiply: { symbol: "×", name: "times" },
+  divide: { symbol: "÷", name: "divided by" },
+};
+
 export function createCalculatorDefinition(): ApplicationDefinition {
   return {
     manifest: {
@@ -83,28 +92,64 @@ function createCalculatorView(model: CalculatorModel): ApplicationView {
       content.tabIndex = 0;
       content.setAttribute("aria-label", "Calculator keyboard input");
 
-      const header = document.createElement("header");
-      header.className = "calculator-app__header";
-      const identity = document.createElement("span");
-      identity.textContent = "SHADOW / CALCULATOR";
-      const mode = document.createElement("span");
-      mode.textContent = "4-OP";
-      header.append(identity, mode);
+      const displayPanel = document.createElement("div");
+      displayPanel.className = "calculator-app__display-panel";
+
+      const pendingDisplay = document.createElement("output");
+      pendingDisplay.className = "calculator-app__pending";
+      pendingDisplay.setAttribute("aria-live", "polite");
+      pendingDisplay.setAttribute("aria-atomic", "true");
 
       const display = document.createElement("output");
       display.className = "calculator-app__display";
       display.setAttribute("aria-label", "Calculator display");
       display.setAttribute("aria-live", "polite");
       display.setAttribute("aria-atomic", "true");
+      displayPanel.append(pendingDisplay, display);
 
       const keypad = document.createElement("div");
       keypad.className = "calculator-app__keypad";
       keypad.setAttribute("aria-label", "Calculator keypad");
       keypad.append(...CALCULATOR_KEYS.map((key) => createKey(document, key)));
+      const operatorButtons = [
+        ...keypad.querySelectorAll<HTMLButtonElement>(".calculator-app__key--operator"),
+      ];
 
       const render = (): void => {
-        display.textContent = model.display;
-        display.dataset.state = model.hasError ? "error" : "ready";
+        const state = model.hasError ? "error" : "ready";
+        const pendingOperation = model.pendingOperation;
+        const presentation = pendingOperation
+          ? OPERATOR_PRESENTATION[pendingOperation.operator]
+          : null;
+        const pendingText =
+          pendingOperation && presentation
+            ? `${pendingOperation.operand} ${presentation.symbol}`
+            : "";
+
+        if (display.textContent !== model.display) {
+          display.textContent = model.display;
+        }
+        display.dataset.state = state;
+        displayPanel.dataset.state = state;
+
+        if (pendingDisplay.textContent !== pendingText) {
+          pendingDisplay.textContent = pendingText;
+        }
+        if (pendingOperation && presentation) {
+          pendingDisplay.setAttribute(
+            "aria-label",
+            `Pending operation: ${pendingOperation.operand} ${presentation.name}`,
+          );
+        } else {
+          pendingDisplay.removeAttribute("aria-label");
+        }
+
+        for (const button of operatorButtons) {
+          button.setAttribute(
+            "aria-pressed",
+            String(button.dataset.calculatorCommand === `operator:${pendingOperation?.operator}`),
+          );
+        }
       };
       const runCommand = (command: string): void => {
         applyCommand(model, command);
@@ -130,7 +175,7 @@ function createCalculatorView(model: CalculatorModel): ApplicationView {
 
       keypad.addEventListener("click", handleClick);
       content.addEventListener("keydown", handleKeyDown);
-      content.append(header, display, keypad);
+      content.append(displayPanel, keypad);
       host.replaceChildren(content);
       render();
       content.focus({ preventScroll: true });
@@ -151,6 +196,9 @@ function createKey(document: Document, key: CalculatorKey): HTMLButtonElement {
   button.textContent = key.label;
   button.dataset.calculatorCommand = key.command;
   button.setAttribute("aria-label", key.name);
+  if (key.kind === "operator") {
+    button.setAttribute("aria-pressed", "false");
+  }
   if (key.shortcuts !== undefined) {
     button.setAttribute("aria-keyshortcuts", key.shortcuts);
   }

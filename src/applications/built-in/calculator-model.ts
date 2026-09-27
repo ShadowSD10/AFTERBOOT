@@ -1,5 +1,10 @@
 export type CalculatorOperator = "add" | "subtract" | "multiply" | "divide";
 
+export interface CalculatorPendingOperation {
+  readonly operand: string;
+  readonly operator: CalculatorOperator;
+}
+
 const ERROR_DISPLAY = "ERROR";
 const MAX_ENTRY_LENGTH = 12;
 const MAX_DISPLAY_LENGTH = 16;
@@ -20,6 +25,17 @@ export class CalculatorModel {
 
   get hasError(): boolean {
     return this.#hasError;
+  }
+
+  get pendingOperation(): CalculatorPendingOperation | null {
+    if (this.#accumulator === null || this.#pendingOperator === null || this.#hasError) {
+      return null;
+    }
+
+    return Object.freeze({
+      operand: formatResult(this.#accumulator),
+      operator: this.#pendingOperator,
+    });
   }
 
   inputDigit(digit: string): void {

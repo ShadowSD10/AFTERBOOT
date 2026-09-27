@@ -572,7 +572,7 @@
 
 .calculator-app {
   display: grid;
-  grid-template-rows: auto minmax(4.75rem, auto) minmax(0, 1fr);
+  grid-template-rows: minmax(5.5rem, auto) minmax(0, 1fr);
   gap: 0.65rem;
   width: 100%;
   height: 100%;
@@ -586,41 +586,50 @@
   background-size: 1.5rem 1.5rem;
 }
 
-.calculator-app__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  color: var(--color-muted);
-  font-size: 0.62rem;
-}
-
-.calculator-app__header span:last-child {
-  color: var(--color-signal);
-}
-
-.calculator-app__display {
-  display: flex;
+.calculator-app__display-panel {
+  display: grid;
+  grid-template-rows: minmax(0.9rem, auto) minmax(0, 1fr);
+  gap: 0.35rem;
   min-width: 0;
   padding: 0.8rem 0.9rem;
   border: 1px solid var(--color-rule-strong);
-  align-items: center;
-  justify-content: flex-end;
   overflow: hidden;
-  color: var(--color-ink);
   background: rgb(8 11 12 / 96%);
-  font-size: 1.7rem;
   font-variant-numeric: tabular-nums;
-  line-height: 1;
   white-space: nowrap;
 }
 
-.calculator-app:focus-visible .calculator-app__display {
+.calculator-app:focus-visible .calculator-app__display-panel {
   border-color: var(--color-signal);
   box-shadow: inset 0 0 0 1px rgb(143 240 189 / 12%);
 }
 
-.calculator-app__display[data-state="error"] {
+.calculator-app__pending {
+  min-width: 0;
+  min-height: 0.9rem;
+  overflow: hidden;
+  color: var(--color-muted);
+  font-size: 0.68rem;
+  line-height: 1;
+  text-overflow: ellipsis;
+}
+
+.calculator-app__display {
+  min-width: 0;
+  align-self: center;
+  overflow: hidden;
+  color: var(--color-ink);
+  font-size: 1.7rem;
+  line-height: 1;
+  text-align: right;
+  text-overflow: clip;
+}
+
+.calculator-app__display-panel[data-state="error"] {
   border-color: var(--color-alert);
+}
+
+.calculator-app__display[data-state="error"] {
   color: var(--color-alert);
   font-size: 1.2rem;
 }
@@ -660,6 +669,15 @@
   border-color: var(--color-rule-strong);
   color: var(--color-signal);
   font-size: 1rem;
+}
+
+.calculator-app__key--operator[aria-pressed="true"] {
+  border-color: var(--color-signal);
+  color: var(--color-ink);
+  background: rgb(143 240 189 / 14%);
+  box-shadow:
+    inset 0 0 0 1px rgb(143 240 189 / 42%),
+    inset 0 -3px var(--color-signal);
 }
 
 .calculator-app__key--utility {
