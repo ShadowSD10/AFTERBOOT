@@ -1044,3 +1044,79 @@ None of these ideas is an M3 requirement.
 The existing M2 ownership model is sufficient for M3. No new global state store, application catalog, launcher service, context-menu domain service, clock source, persistence mechanism, filesystem substitute, or external dependency is justified. M3 implementation should extend the composition root with three definitions, add instance-local application models/views, and add disposable shell projections for the drawer and desktop context menu.
 
 No M3 source code, tests, styles, package files, workflows, configuration, application implementations, release, tag, PR, merge, or deployment was created during this planning session.
+
+---
+
+# M3 Phase 1 — Shell Foundation Implementation + Visual Refinement
+
+- **Date:** 2026-09-28
+- **Branch:** `feature/m3-applications-os-experience`
+- **Implementation commit:** `ad088e41dd6c99faf5ae764036b5167271e0e219`
+- **Visual refinement commit:** `41113dd9a618c1eeddb025621c7ffb894b411ce9`
+- **Checkpoint status:** M3 Phase 1 implemented and manually verified; Milestone 3 remains in progress
+
+## Scope Implemented
+
+- Added a registry-backed floating Application Drawer/Launcher.
+- Kept the task strip limited to running windows.
+- Added a scoped SHADOW OS desktop context menu.
+- Added projection-only Refresh Desktop behavior.
+- Preserved accessible keyboard interaction, focus recovery, and overlay dismissal.
+- Added responsive launcher and context-menu behavior.
+- Refined the launcher into a compact floating SHADOW OS surface.
+- Refined the context menu into a minimal two-action command surface.
+
+## Architecture
+
+- `ApplicationRegistry` remains the sole installed-application catalog.
+- `ApplicationManager` remains responsible for application launch and lifecycle.
+- `WindowManager` remains responsible for windows, focus, geometry, and z-order.
+- The drawer and context menu remain disposable shell views/overlays owned by `DesktopView`.
+- The task strip represents running windows rather than installed applications.
+- Context-menu interception remains scoped to registered desktop surfaces; application content retains native browser context-menu behavior.
+- Refresh Desktop performs projection/reconciliation only. It does not reload the page, reset the runtime, or mutate application/window manager state.
+- No new global service, dependency, persistence mechanism, filesystem behavior, or application architecture was introduced.
+
+## Visual Refinement
+
+Manual review of the initial Phase 1 presentation led to a focused visual pass:
+
+- The App Drawer became a compact floating launcher above the task strip.
+- Its single-application state was deliberately composed as a bounded application tile rather than an empty large panel.
+- The context menu became a compact two-action SHADOW OS command surface containing Refresh Desktop and Applications.
+- The refinement was CSS-led, with typed presentation symbols rendered separately from accessible action names.
+- Existing behavior, ownership boundaries, and application/window architecture were preserved.
+
+## Verification
+
+- Prettier: PASS
+- Strict TypeScript: PASS
+- ESLint: PASS
+- Vitest: 38 tests PASS across 9 files
+- Production build: PASS
+- Playwright Chromium: 16 tests PASS
+
+Manual viewport inspection passed at 1440px, 1024px, 768px, and 360 × 740. The launcher and context menu remained contained without clipping or horizontal page overflow. Launcher opening and launching, context-menu edge clamping, keyboard/focus behavior, and the existing window interactions remained functional. Refresh Desktop did not reload the browser or disturb open application/window state. Right-click inside application content retained the native browser context menu, and restart returned SHADOW OS to a clean desktop.
+
+Reduced-motion behavior passed the existing automated Playwright coverage. Manual reduced-motion verification was not performed for this checkpoint.
+
+## Remaining M3 Work
+
+Milestone 3 is not complete. Remaining work includes:
+
+- Notepad.
+- Calculator.
+- Clock.
+- Broader M3 integration.
+- Final accessibility and manual acceptance.
+- Final M3 quality-gate audit.
+- M3 documentation and milestone closure.
+
+## Commit References
+
+- `ad088e41dd6c99faf5ae764036b5167271e0e219` — `feat: add M3 application launcher and context menu`
+- `41113dd9a618c1eeddb025621c7ffb894b411ce9` — `style: refine M3 launcher and context menu`
+
+## Scope Review
+
+This checkpoint introduced no Notepad, Calculator, Clock, Settings, virtual filesystem, persistence, scenarios, networking, backend, account, release, or version changes. It records the timeline from M3 planning through Phase 1 implementation and visual refinement while leaving the remaining M3 application work explicit.
