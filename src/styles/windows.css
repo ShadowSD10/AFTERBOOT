@@ -31,6 +31,11 @@
   animation: desktop-enter 350ms ease-out both;
 }
 
+.desktop-shell__workspace:focus-visible {
+  outline: 1px solid var(--color-signal);
+  outline-offset: -3px;
+}
+
 .desktop-shell__identity {
   position: absolute;
   z-index: 0;
@@ -193,12 +198,7 @@
   overflow-x: auto;
 }
 
-.application-launcher__label {
-  color: var(--color-signal);
-  font-size: 0.65rem;
-}
-
-.application-launcher__button,
+.application-drawer__trigger,
 .window-task-strip__button,
 .diagnostics-app__action {
   min-height: 2.5rem;
@@ -208,6 +208,235 @@
   color: var(--color-ink);
   background: var(--color-panel);
   cursor: pointer;
+}
+
+.application-drawer__trigger {
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--color-ink);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+}
+
+.application-drawer__trigger::before {
+  width: 0.75rem;
+  height: 0.75rem;
+  border: 1px solid var(--color-signal);
+  background:
+    linear-gradient(90deg, transparent 42%, var(--color-signal) 42% 58%, transparent 58%),
+    linear-gradient(transparent 42%, var(--color-signal) 42% 58%, transparent 58%);
+  content: "";
+}
+
+.application-drawer__trigger:hover,
+.application-drawer__trigger[aria-expanded="true"] {
+  border-color: var(--color-signal);
+  background: var(--color-panel-raised);
+}
+
+.application-drawer__trigger[aria-expanded="true"]::before {
+  background: var(--color-signal);
+  box-shadow: 0 0 0.7rem rgb(143 240 189 / 30%);
+}
+
+.application-drawer,
+.desktop-context-menu {
+  z-index: 1000;
+  border: 1px solid var(--color-rule-strong);
+  color: var(--color-ink);
+  background: #0c1214;
+  box-shadow: 0 1.5rem 4rem rgb(0 0 0 / 65%);
+}
+
+.application-drawer[hidden],
+.desktop-context-menu[hidden] {
+  display: none;
+}
+
+.application-drawer {
+  position: absolute;
+  bottom: 5rem;
+  left: 1rem;
+  display: grid;
+  width: min(24rem, calc(100% - 2rem));
+  max-height: min(62vh, 28rem);
+  grid-template-rows: auto minmax(0, 1fr);
+  border-color: var(--color-rule-strong);
+  background:
+    linear-gradient(rgb(143 240 189 / 3%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(143 240 189 / 3%) 1px, transparent 1px), #0c1214;
+  background-size: 1.25rem 1.25rem;
+  box-shadow:
+    0 0 0 1px rgb(143 240 189 / 6%),
+    0 1.25rem 3rem rgb(0 0 0 / 58%);
+}
+
+.application-drawer__header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  padding: 0.7rem 0.85rem;
+  border-bottom: 1px solid var(--color-rule);
+  background: rgb(16 23 25 / 94%);
+}
+
+.application-drawer__eyebrow {
+  color: var(--color-signal);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+}
+
+.application-drawer__title {
+  margin: 0;
+  font-family: inherit;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.application-drawer__list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+  min-height: 0;
+  padding: 0.85rem;
+  overflow-y: auto;
+  background: rgb(8 11 12 / 72%);
+}
+
+.application-drawer__entry {
+  display: grid;
+  grid-template-rows: 3.25rem auto;
+  align-items: center;
+  justify-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  min-height: 7.5rem;
+  padding: 0.8rem 0.45rem;
+  border: 1px solid var(--color-rule);
+  border-radius: 2px;
+  color: var(--color-ink);
+  background: rgb(16 23 25 / 90%);
+  text-align: center;
+  cursor: pointer;
+}
+
+.application-drawer__entry:hover,
+.application-drawer__entry:focus-visible {
+  border-color: var(--color-signal);
+  background: rgb(22 32 35 / 96%);
+  box-shadow: inset 0 -2px var(--color-signal);
+}
+
+.application-drawer__marker {
+  display: grid;
+  width: 3.25rem;
+  height: 3.25rem;
+  place-items: center;
+  border: 1px solid var(--color-signal);
+  color: var(--color-signal);
+  background: rgb(143 240 189 / 4%);
+  font-size: 0.75rem;
+}
+
+.application-drawer__notes-icon {
+  width: 2.35rem;
+  height: 2.35rem;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+}
+
+.application-drawer__notes-page {
+  fill: currentColor;
+  fill-opacity: 0.04;
+}
+
+.application-drawer__notes-pencil {
+  fill: rgb(16 23 25);
+}
+
+.application-drawer__calculator-icon {
+  width: 2.35rem;
+  height: 2.35rem;
+  stroke: currentColor;
+  stroke-width: 1.35;
+  stroke-linejoin: miter;
+}
+
+.application-drawer__calculator-body {
+  fill: currentColor;
+  fill-opacity: 0.04;
+}
+
+.application-drawer__calculator-display {
+  fill: rgb(16 23 25);
+}
+
+.application-drawer__calculator-keys {
+  fill: currentColor;
+  stroke: none;
+}
+
+.application-drawer__copy {
+  display: grid;
+  gap: 0;
+  min-width: 0;
+}
+
+.application-drawer__name {
+  font-size: 0.66rem;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
+.application-drawer__description {
+  display: none;
+}
+
+.desktop-context-menu {
+  position: fixed;
+  display: grid;
+  width: min(13rem, calc(100vw - 1rem));
+  padding: 0.25rem;
+  border-color: var(--color-rule-strong);
+  box-shadow:
+    0 0 0 1px rgb(143 240 189 / 5%),
+    0 0.9rem 2rem rgb(0 0 0 / 55%);
+}
+
+.desktop-context-menu__item {
+  display: grid;
+  min-height: 2rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.4rem 0.55rem;
+  border: 0;
+  border-radius: 0;
+  color: var(--color-ink);
+  background: transparent;
+  font-size: 0.65rem;
+  text-align: left;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.desktop-context-menu__symbol {
+  color: var(--color-signal);
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.desktop-context-menu__item:hover,
+.desktop-context-menu__item:focus-visible {
+  color: var(--color-signal);
+  background: rgb(143 240 189 / 9%);
+  box-shadow: inset 2px 0 var(--color-signal);
 }
 
 .window-task-strip__button {
@@ -303,6 +532,223 @@
   line-height: 1.7;
 }
 
+.notepad-app {
+  width: 100%;
+  height: 100%;
+  padding: 0.75rem;
+  background:
+    linear-gradient(rgb(143 240 189 / 3%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(143 240 189 / 3%) 1px, transparent 1px), #0c1214;
+  background-size: 1.5rem 1.5rem;
+}
+
+.notepad-app__editor {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: 1rem;
+  resize: none;
+  border: 1px solid var(--color-rule);
+  border-radius: 0;
+  outline: 0;
+  color: var(--color-ink);
+  caret-color: var(--color-signal);
+  background: rgb(8 11 12 / 92%);
+  font: inherit;
+  font-size: 0.78rem;
+  line-height: 1.7;
+}
+
+.notepad-app__editor::placeholder {
+  color: var(--color-muted);
+}
+
+.notepad-app__editor:focus-visible {
+  border-color: var(--color-signal);
+  box-shadow: inset 0 0 0 1px rgb(143 240 189 / 12%);
+}
+
+.calculator-app {
+  display: grid;
+  grid-template-rows: minmax(5.5rem, auto) minmax(0, 1fr);
+  gap: 0.65rem;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: 0.75rem;
+  outline: 0;
+  background:
+    linear-gradient(rgb(143 240 189 / 3%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(143 240 189 / 3%) 1px, transparent 1px), #0c1214;
+  background-size: 1.5rem 1.5rem;
+}
+
+.calculator-app__display-panel {
+  display: grid;
+  grid-template-rows: minmax(0.9rem, auto) minmax(0, 1fr);
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--color-rule-strong);
+  overflow: hidden;
+  background: rgb(8 11 12 / 96%);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.calculator-app:focus-visible .calculator-app__display-panel {
+  border-color: var(--color-signal);
+  box-shadow: inset 0 0 0 1px rgb(143 240 189 / 12%);
+}
+
+.calculator-app__pending {
+  min-width: 0;
+  min-height: 0.9rem;
+  overflow: hidden;
+  color: var(--color-muted);
+  font-size: 0.68rem;
+  line-height: 1;
+  text-overflow: ellipsis;
+}
+
+.calculator-app__display {
+  min-width: 0;
+  align-self: center;
+  overflow: hidden;
+  color: var(--color-ink);
+  font-size: 1.7rem;
+  line-height: 1;
+  text-align: right;
+  text-overflow: clip;
+}
+
+.calculator-app__display-panel[data-state="error"] {
+  border-color: var(--color-alert);
+}
+
+.calculator-app__display[data-state="error"] {
+  color: var(--color-alert);
+  font-size: 1.2rem;
+}
+
+.calculator-app__keypad {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(5, minmax(2.7rem, 1fr));
+  grid-auto-flow: row dense;
+  gap: 0.35rem;
+  min-width: 0;
+  min-height: 0;
+}
+
+.calculator-app__key {
+  min-width: 0;
+  min-height: 0;
+  padding: 0.35rem;
+  border: 1px solid var(--color-rule);
+  border-radius: 0;
+  outline: 0;
+  color: var(--color-ink);
+  background: rgb(16 23 25 / 96%);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.calculator-app__key:hover,
+.calculator-app__key:focus-visible {
+  border-color: var(--color-signal);
+  background: rgb(22 32 35 / 98%);
+  box-shadow: inset 0 -2px var(--color-signal);
+}
+
+.calculator-app__key--operator {
+  border-color: var(--color-rule-strong);
+  color: var(--color-signal);
+  font-size: 1rem;
+}
+
+.calculator-app__key--operator[aria-pressed="true"] {
+  border-color: var(--color-signal);
+  color: var(--color-ink);
+  background: rgb(143 240 189 / 14%);
+  box-shadow:
+    inset 0 0 0 1px rgb(143 240 189 / 42%),
+    inset 0 -3px var(--color-signal);
+}
+
+.calculator-app__key--utility {
+  color: var(--color-muted);
+  font-size: 0.7rem;
+}
+
+.calculator-app__key--equals {
+  grid-row: span 2;
+  border-color: var(--color-signal);
+  color: #08110d;
+  background: var(--color-signal);
+  font-size: 1rem;
+}
+
+.calculator-app__key--equals:hover,
+.calculator-app__key--equals:focus-visible {
+  color: #08110d;
+  background: #b4ffd6;
+}
+
+.calculator-app__key[data-calculator-command="digit:0"] {
+  grid-column: span 2;
+}
+
+.clock-app {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: 1rem;
+  place-items: center;
+  overflow: hidden;
+  background:
+    linear-gradient(rgb(143 240 189 / 3%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(143 240 189 / 3%) 1px, transparent 1px), #0c1214;
+  background-size: 1.5rem 1.5rem;
+}
+
+.clock-app__face {
+  display: grid;
+  width: min(100%, 28rem);
+  gap: 1rem;
+  padding: 1.35rem 1rem;
+  border-block: 1px solid var(--color-rule-strong);
+  justify-items: center;
+  background: rgb(8 11 12 / 72%);
+  text-align: center;
+}
+
+.clock-app__time,
+.clock-app__date {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.clock-app__time {
+  color: var(--color-signal);
+  font-size: 3rem;
+}
+
+.clock-app__date {
+  color: var(--color-muted);
+  font-size: 0.78rem;
+}
+
 @media (max-width: 44rem) {
   .desktop-shell {
     min-height: 28rem;
@@ -342,6 +788,24 @@
     grid-column: 1;
   }
 
+  .application-drawer {
+    right: 0.75rem;
+    bottom: 7.5rem;
+    left: 0.75rem;
+    width: auto;
+    max-height: min(56vh, 24rem);
+  }
+
+  .application-drawer__list {
+    gap: 0.45rem;
+    padding: 0.7rem;
+  }
+
+  .application-drawer__entry {
+    min-height: 6.75rem;
+    padding-inline: 0.3rem;
+  }
+
   .window-task-strip {
     grid-column: 1 / -1;
     grid-row: 2;
@@ -354,5 +818,9 @@
   .desktop-shell__reset {
     grid-column: 2;
     grid-row: 1;
+  }
+
+  .notepad-app {
+    padding: 0.5rem;
   }
 }

@@ -680,3 +680,614 @@ Existing M1 unit, integration, and Playwright tests remain unchanged and pass as
 No virtual filesystem, file manager, text editor, terminal, process/task simulation, notifications, settings, persistence, accounts, networking, scenarios, backend, real machine access, dynamic application installation, multi-instance policy, global window-cycling shortcut, or keyboard move/resize behavior was introduced.
 
 No release, version tag, GitHub Release, PR, merge, or branch change was created.
+
+---
+
+# Milestone 3 Architecture Planning Session
+
+- **Date:** 2026-09-27
+- **Branch:** `feature/m3-applications-os-experience`
+- **Starting `develop` commit:** `0135404d61219ac1e3071123179d45911c04e44a`
+- **Authoritative roadmap ref:** `origin/documentation` at `a719f3fe598ea523cdb783059677a026173f6c84`
+- **Task type:** Architecture review and implementation planning only
+- **Implementation status:** Not started
+
+## Planning Context and Scope
+
+The post-M2 roadmap was intentionally revised before this planning session. The authoritative documentation now defines M3 as **Applications + OS Experience**, moves the shared Virtual Filesystem to M4, and leaves M5 as Scenario Foundation. Earlier entries in this file preserve the former filesystem-first M3 plan as historical context; this entry supersedes that prospective plan without rewriting it.
+
+M3 is limited to:
+
+- a temporary in-memory Notepad;
+- a basic Calculator;
+- a small digital Clock;
+- the existing System Diagnostics application;
+- a registry-backed, keyboard-accessible Application Drawer;
+- the existing task strip as a projection of open windows only;
+- a SHADOW OS desktop context menu; and
+- a projection-only Refresh Desktop command that does not reload or reboot the application.
+
+M3 explicitly excludes the Virtual Filesystem, File Manager, file saving/loading, persistent application data, Browser, Email, Image Viewer, Settings application, themes, Calendar, Tasks, Terminal, networking, accounts, backend/cloud persistence, and scenario runtime/gameplay. M4 owns the shared Virtual Filesystem and coherent filesystem-backed sandbox.
+
+## Documentation and Implementation Reviewed
+
+Documentation reviewed:
+
+- `README.md`
+- `CHANGELOG.md`
+- `docs/AFTERBOOT_PROJECT.md`
+- `docs/SESSION_RESULTS.md`
+- canonical `docs/AFTERBOOT_MILESTONES.md` from `origin/documentation`
+- the post-M2 roadmap revisions on `origin/documentation`
+
+Implementation and tests reviewed:
+
+- composition in `src/bootstrap/start-afterboot.ts`;
+- runtime/reset behavior in `src/core/runtime/shadow-runtime.ts`;
+- typed events, disposables, identifiers, and the clock boundary;
+- application contracts, registry, and manager;
+- `WindowManager` and `WindowLayerView`;
+- `ShellView`, `DesktopView`, launcher, task strip, system clock, and responsive styles;
+- the existing System Diagnostics application; and
+- M0-M2 unit, integration, and Playwright coverage.
+
+## Existing Architecture Assessment
+
+The M2 architecture is sufficient for M3 without a framework rewrite or a second catalog:
+
+- `ApplicationRegistry` already owns the immutable startup catalog and exposes ordered manifests through `list()`.
+- `ApplicationManager` already owns single-instance launch, focus/restore-on-relaunch, application instances, primary and auxiliary windows, reset, and disposal.
+- `WindowManager` remains the only authority for window geometry, modes, z-order, focus, and work-area constraints.
+- `WindowLayerView` already mounts application views by stable window identity and translates DOM interaction into manager commands.
+- `DesktopView` is the correct owner for shell composition, task-strip projection, transient launcher/context-menu presentation, and focus handoff.
+- `ShadowRuntime` should remain limited to boot/reset/failure lifecycle and should not absorb M3 overlay or application state.
+- The existing `Clock` and `formatSystemTime` boundaries are deterministic and reusable by the Clock application.
+- Reset and failure already dispose applications and windows through the composition root; M3 additions must join those existing disposal paths.
+
+The current `ApplicationContext` is intentionally narrow and remains sufficient. M3 does not justify exposing the runtime, registry, managers, clock, or broad system services to every application. The Clock definition can receive the existing `Clock` explicitly from the composition root through its factory.
+
+Application definitions must remain construction-only: `create()` returns an instance and must not call `context.openWindow()` synchronously before the manager has registered that instance. M3 applications require only a primary window, so no manager contract change is needed for this ordering constraint.
+
+## A. Application Architecture
+
+- Register Notepad, Calculator, Clock, and the existing System Diagnostics definition together at startup in the composition root.
+- Continue using registry manifests as the sole installed-application metadata source. The current ID, name, description, and window metadata are enough for M3; icon, grouping, search, sort-key, and launch-policy fields are not required.
+- Preserve registration order as deterministic drawer order unless later usability evidence requires explicit sorting metadata.
+- Continue routing all launches through `ApplicationManager.launch()`. Relaunching an existing M3 application restores or focuses its primary window and does not create another instance.
+- Keep each application's mutable state inside its application instance/model, not in the DOM, shell, registry, or application manager.
+- Keep application views on the existing `mount(host, document): Disposable` contract.
+- Closing a primary window, runtime reset/failure, and application disposal release application-local resources exactly once. Reopening after close creates a fresh instance.
+- Do not add multi-instance launch policies during M3; no planned M3 application requires one.
+
+## B. Application Drawer
+
+`ApplicationRegistry` owns discovery, and `ApplicationManager` owns launch. A new domain-level `AppLauncher` service would duplicate those authorities and is not justified.
+
+The drawer should be a disposable shell view/controller owned by `DesktopView`:
+
+1. Read immutable manifests from `ApplicationRegistry.list()`.
+2. Render one entry per registered application, including System Diagnostics.
+3. Dispatch the selected application ID to `ApplicationManager.launch()`.
+4. Close after a successful launch and allow the existing window layer to focus the launched or restored window.
+
+The bottom bar should expose one clearly labeled drawer trigger rather than one permanent button per installed application. The trigger uses `aria-expanded`, `aria-controls`, and an appropriate popup relationship. Opening by pointer or keyboard moves focus to the first available application. Arrow keys move among entries; Home and End move to the bounds; Enter or Space launches; Escape closes and restores focus to the trigger. Pointer interaction outside the drawer dismisses it and restores focus when appropriate.
+
+The drawer remains viewport-contained and scrollable. It may appear as an anchored panel on desktop and a constrained sheet/panel on small screens, but both layouts use the same catalog and launch commands. Reduced-motion mode must not depend on an animated transition to make the drawer usable.
+
+## C. Task Strip and Bottom Bar
+
+M3 should refine, not replace, the current footer composition:
+
+- the application area becomes one App Drawer trigger;
+- the task strip continues to show open windows only and continues to focus or restore them;
+- the status area retains the existing clock and restart control; and
+- responsive layouts may rearrange these zones without changing their ownership or data sources.
+
+The task strip must not become an installed-application catalog and must not duplicate drawer entries. Existing focus recovery after window minimize/close remains part of the contract, with the drawer trigger replacing the first permanent application button as the shell fallback target.
+
+## D. Context Menu
+
+The initial context menu is transient shell presentation state owned by `DesktopView`, not a new OS domain service. Its model should use typed surface and action identifiers plus immutable item data; DOM elements and executable callbacks do not belong in the menu model.
+
+The first registered surface is the desktop workspace/background. The browser's native `contextmenu` is suppressed only when a SHADOW OS surface has explicitly claimed that interaction. Window/application content and editable controls, especially the Notepad editing surface, are not suppressed by the desktop provider. Future window, application, and file providers can supply their own typed item definitions without changing the initial action-dispatch path.
+
+The initial desktop menu contains only:
+
+- **Refresh Desktop**; and
+- **Open App Drawer**.
+
+No Settings placeholder is needed because M3 has no settings capability.
+
+Menu behavior requirements:
+
+- pointer invocation anchors at the pointer location;
+- keyboard invocation through the Context Menu key or Shift+F10 anchors to the focused desktop surface;
+- placement clamps to the visible workspace/viewport and handles all edges;
+- focus moves to the first enabled item;
+- Arrow Up/Down and Home/End navigate enabled items;
+- Enter or Space invokes the focused item;
+- Escape, outside pointer interaction, a second invocation, or successful action dismisses the menu;
+- dismissal restores focus to the invoker when it remains available; and
+- disposal removes document-level listeners and any active menu DOM.
+
+The initial implementation may use a focused context-menu view/controller plus typed desktop definitions. A global provider registry or context-menu service should be deferred until a second context-specific consumer proves that abstraction necessary.
+
+## E. Refresh Desktop
+
+Refresh Desktop is a shell command, not a runtime reset. It must:
+
+- close transient drawer/context-menu overlays;
+- re-read the immutable registry and current application/window snapshots;
+- reconcile launcher, task-strip, window-layer, clock, and work-area presentation from those authoritative sources; and
+- preserve running application instances, application-local state, open windows, window modes, geometry, z-order, and the current runtime boot cycle.
+
+It must not call `location.reload()`, navigate, invoke `ShadowRuntime.reset()`, recreate the composition root, dispose applications, close windows, or mutate unrelated OS state. The smallest implementation is an explicit `DesktopView` refresh command that invokes existing projection/reconciliation methods. No new persistent desktop model or event is required because refresh does not change domain state.
+
+## F. Notepad
+
+- Create one instance-local text model whose value is independent from its rendered control.
+- Use a native multiline text control for editing, selection, copy, paste, undo, and standard keyboard behavior rather than reimplementing browser text editing.
+- Synchronize input into the instance model so a shell projection refresh or view remount does not lose text while the application instance remains alive.
+- Start each new instance blank.
+- Preserve text while the same single instance is minimized, restored, focused again, or retained through Refresh Desktop.
+- Discard text when the primary window closes, the application is disposed, or SHADOW OS resets/fails.
+- Do not expose save/open commands, filenames, fake paths, storage adapters, local storage, IndexedDB, import/export, or any placeholder filesystem API.
+
+## G. Calculator
+
+Use a small pure deterministic state machine rather than evaluating strings with `eval()` or introducing a parser/library.
+
+The locked M3 operation set is addition, subtraction, multiplication, and division with integer and decimal input. The model tracks the current entry, accumulator, pending operator, entry-replacement state, and an error state. Operations evaluate in immediate pocket-calculator order; expression precedence, history, memory registers, percentages, scientific operations, and programmable expressions are out of scope.
+
+Required controls are digits, decimal point, the four operators, equals, clear, and backspace. Keyboard input maps to the same commands; Enter invokes equals, Escape clears, and Backspace removes the current entry. Division by zero and non-finite results enter a visible `Error` state. Clear or the next numeric entry recovers deterministically. Display formatting and maximum practical input length should be finalized during implementation without changing this operation model.
+
+## H. Clock
+
+- Inject the existing `Clock` into the Clock application definition factory from the composition root; do not call `Date.now()` directly and do not add a second clock source.
+- Reuse `formatSystemTime` for browser-local date/time presentation unless a separate pure formatter is proven necessary.
+- Render a small digital time/date view and schedule one update at a time through `Clock.schedule()`.
+- Cancel the pending scheduled update when the view unmounts or the application instance is disposed.
+- Use the existing fake clock strategy for deterministic tests.
+- Do not broaden `ApplicationContext` solely for Clock. Reconsider a read-only time capability only when another application needs application-context clock access.
+
+The current clock abstraction requires no architectural change for M3.
+
+## I. Accessibility, Focus, and Responsive Behavior
+
+- Preserve semantic headings, labels, native buttons, visible focus, and logical source/tab order.
+- The App Drawer and context menu must be completely operable without a pointer and must restore focus on dismissal.
+- The context menu uses menu/menuitem semantics; the drawer uses a labeled panel/dialog or navigation region with ordinary application buttons rather than falsely presenting application launch as a command menu.
+- The desktop surface must provide a discoverable focus target for keyboard context-menu invocation.
+- Notepad retains native text-selection and clipboard shortcuts and must have an accessible label.
+- Calculator controls need unambiguous accessible names, a readable result/status, and no color-only error state.
+- Clock uses semantic time output and must not announce every one-second update through an intrusive live region.
+- Existing window focus behavior and task-strip restore behavior remain intact when drawer entries replace permanent launcher buttons.
+- Desktop and current small-screen active-window layouts must contain drawer, menus, and application content without horizontal overflow or inaccessible controls.
+- New transitions must honor the existing reduced-motion setting; no essential state change may depend on animation.
+
+## J. Testing Strategy
+
+### Domain and Unit Tests
+
+- Notepad model: initial blank value, text replacement/edit synchronization, retention while the instance lives, and fresh state after a new instance.
+- Calculator model: each operation, decimals, chained immediate operations, operator replacement, equals, clear, backspace, division by zero, non-finite/error recovery, and immutable/read-only snapshots if snapshots are exposed.
+- Clock: initial formatting, scheduled updates, one active scheduled callback, and cancellation on disposal using a fake clock.
+- Any extracted drawer/context-menu reducer: deterministic open, navigation, selection, dismissal, and edge-position calculations independent from DOM nodes.
+
+### Service Integration Tests
+
+- Registry lists all four definitions exactly once in deterministic order.
+- Application Manager launches each M3 application through the existing contract.
+- Relaunch restores/focuses the existing primary window and does not create a second instance.
+- Closing and reset dispose application models/timers and leave no windows or running instances.
+- Refresh Desktop preserves application/window snapshots and application-local Notepad state.
+- Context-menu actions dispatch only approved shell commands and do not invoke runtime reset or navigation.
+
+### View and Browser Tests
+
+The repository has no DOM component-test environment and M3 does not justify adding one solely for these views. Keep models and positioning logic unit-testable, service workflows in Vitest, and semantic DOM/focus interaction in Playwright.
+
+Playwright should verify:
+
+- pointer and keyboard drawer open, navigation, launch, dismissal, and focus restoration;
+- deterministic catalog contents including System Diagnostics;
+- task strip contains only running windows;
+- Notepad typing, selection/clipboard-compatible behavior, relaunch retention, close/reopen discard, and reset cleanup;
+- Calculator pointer and keyboard arithmetic, clear/backspace, decimal, and division-by-zero recovery;
+- Clock date/time rendering and cleanup behavior without direct wall-clock flakiness;
+- desktop pointer and keyboard context-menu invocation, edge clamping, menu navigation, outside/Escape dismissal, and focus restoration;
+- native context-menu suppression on owned desktop surfaces but not on editable Notepad content;
+- Refresh Desktop causes no navigation/reload, boot-cycle change, app disposal, window loss, or Notepad text loss;
+- existing System Diagnostics, window interactions, restart, focus recovery, and M0-M2 workflows remain operational;
+- desktop and current 360 x 740 small-screen behavior have no horizontal overflow or blocked critical controls; and
+- no unexpected console errors, page errors, failed requests, or external runtime dependencies occur.
+
+All checks should prefer roles, accessible names, stable domain markers, injected time, and observable manager results over arbitrary delays or implementation-specific selectors.
+
+## Locked Architectural Decisions
+
+1. **Use the M2 application framework unchanged for M3 application ownership.**
+
+- **Reason:** Registry discovery, single-instance launch, primary-window ownership, reset, and disposal already satisfy M3.
+- **Alternative considered:** A new application runtime or launcher service.
+- **Consequence:** All M3 apps register at startup and launch only through `ApplicationManager`.
+
+2. **Keep the registry as the only installed-application catalog.**
+
+- **Reason:** A second drawer catalog would introduce conflicting truth.
+- **Alternative considered:** Drawer-owned application configuration.
+- **Consequence:** Drawer order and metadata come directly from immutable manifests.
+
+3. **Keep drawer and context-menu state in disposable shell views.**
+
+- **Reason:** Open/position/focus state is transient presentation state, not OS domain state.
+- **Alternative considered:** New global services or runtime state.
+- **Consequence:** `DesktopView` owns and disposes both overlays; domain managers remain unchanged.
+
+4. **Keep the task strip limited to open windows.**
+
+- **Reason:** Installed applications and running windows are different concepts with existing owners.
+- **Alternative considered:** Keep permanent application launch buttons mixed with running-window controls.
+- **Consequence:** One drawer trigger replaces permanent per-application launcher buttons.
+
+5. **Define Refresh Desktop as projection reconciliation only.**
+
+- **Reason:** A refresh should correct/rebuild presentation from authoritative state without becoming restart.
+- **Alternatives considered:** Browser reload, runtime reset, or composition-root reconstruction.
+- **Consequence:** Apps, windows, local app state, geometry, and boot cycle survive refresh.
+
+6. **Keep Notepad text instance-local and ephemeral.**
+
+- **Reason:** M3 needs useful editing but M4 owns shared storage.
+- **Alternative considered:** Local storage or a temporary filesystem.
+- **Consequence:** Text survives view reconciliation while the instance lives and is discarded on close/reset.
+
+7. **Use an explicit calculator state machine with four arithmetic operations.**
+
+- **Reason:** It is deterministic, testable, and avoids unsafe evaluation or unnecessary parsing.
+- **Alternatives considered:** Evaluate expression strings or add a general expression parser.
+- **Consequence:** History, precedence parsing, memory, percentage, and scientific behavior remain excluded.
+
+8. **Inject the existing Clock into the Clock definition factory.**
+
+- **Reason:** This reuses deterministic time without broadening every application's context.
+- **Alternative considered:** Direct browser time or adding Clock to `ApplicationContext`.
+- **Consequence:** The composition root wires Clock explicitly and disposal cancels scheduled ticks.
+
+9. **Claim native context-menu behavior only for registered SHADOW OS surfaces.**
+
+- **Reason:** Application/editable content may need native browser behavior until it has its own provider.
+- **Alternatives considered:** Suppress the native menu across the entire shell or introduce a global provider service before a second provider exists.
+- **Consequence:** M3 begins with the desktop background and leaves future typed providers incremental.
+
+10. **Add no new external dependency or DOM test environment for M3.**
+
+- **Reason:** Existing TypeScript, browser APIs, Vitest service tests, and Playwright cover the planned behavior.
+- **Alternative considered:** Add a browser-like DOM unit-test dependency solely for M3 views.
+- **Consequence:** Pure logic stays DOM-independent and browser semantics are verified end to end.
+
+## Open Questions
+
+- What exact visual composition gives the App Drawer a distinct SHADOW OS identity while preserving the behavioral contract above?
+- What practical Calculator input-length and floating-point display policy avoids misleading output without expanding into arbitrary precision?
+- Should a second context-specific consumer in M3 appear, or should the generalized provider registry wait until M4 file contexts exist?
+- Which formal browser and assistive-technology matrix will gate M3 beyond the current Chromium baseline and manual keyboard review?
+
+These questions may be resolved during implementation without changing subsystem ownership or the M3/M4 boundary.
+
+## Deferred Decisions
+
+- Virtual Filesystem contracts, paths, metadata, events, seed data, and storage adapters.
+- File Manager and Notepad save/open workflows.
+- Browser persistence, import/export, and shared application data.
+- Image Viewer and file associations.
+- Settings application, themes, Calendar, Tasks, Terminal, Browser, Email, networking, accounts, and backend services.
+- Process/task-service semantics.
+- Scenario packages, setup/reset, objectives, progression, and gameplay.
+- Multi-instance launch policies and dynamic application installation.
+- Global context-provider registration until more than one concrete provider exists.
+
+## Future Ideas
+
+- Drawer search, grouping, favorites, and optional manifest icon metadata after the base catalog proves a need.
+- A command palette sharing typed action IDs with context menus.
+- Application/window grouping in the task strip.
+- Capability-filtered context providers for windows, applications, and M4 file surfaces.
+
+None of these ideas is an M3 requirement.
+
+## Proposed M3 Definition of Done
+
+### Applications
+
+- Notepad, Calculator, Clock, and System Diagnostics are registered once in the startup registry and launch through `ApplicationManager`.
+- Repeated launch restores/focuses the existing single instance.
+- Notepad provides labeled native multiline editing with temporary instance-local text, retains it while that instance lives, and discards it on close/reset without any save, load, path, storage, or persistence API.
+- Calculator provides deterministic pointer and keyboard use for addition, subtraction, multiplication, division, decimals, equals, clear, and backspace, including recoverable division-by-zero/non-finite errors.
+- Clock presents local digital date/time from the injected existing `Clock`, updates predictably, and cancels scheduled work on close/reset/disposal.
+- System Diagnostics remains launchable and functionally unchanged except for normal drawer integration.
+
+### Shell and Interaction
+
+- One keyboard-accessible App Drawer trigger replaces permanent per-application bottom-bar entries.
+- The drawer lists registry manifests in deterministic order and launches only through `ApplicationManager`.
+- The task strip lists only open windows and preserves focus/restore behavior.
+- Desktop pointer and keyboard invocation opens a viewport-clamped SHADOW OS context menu with Refresh Desktop and Open App Drawer.
+- Native context-menu suppression is limited to the registered desktop surface; editable Notepad behavior remains native.
+- Escape, outside interaction, launch/action completion, and disposal dismiss overlays with deterministic focus restoration.
+- Refresh Desktop causes no browser navigation, runtime reset, boot-cycle change, application disposal, window loss, geometry reset, or Notepad text loss.
+
+### Quality and Lifecycle
+
+- Drawer, context menu, all applications, and critical shell paths are accessible by keyboard with semantic labels, visible focus, and reduced-motion-safe behavior.
+- Desktop and the current supported small-screen presentation remain coherent without horizontal overflow or blocked critical controls.
+- Closing applications, restart/reset, runtime failure, and top-level disposal leave no stale instances, windows, overlays, event listeners, or scheduled clock work.
+- Focus recovery remains predictable after overlay dismissal, application launch, window minimize/close, and reset.
+- Focused unit and integration tests cover application models, registry/manager workflows, refresh invariants, commands, and disposal.
+- Playwright covers the critical pointer, keyboard, responsive, lifecycle, focus, context-menu, drawer, and application workflows with no console/page/network failures.
+- Prettier, strict TypeScript, ESLint, all Vitest tests, production build, and all Playwright tests pass.
+- Manual desktop, current small-screen, keyboard-only, focus, and reduced-motion review passes.
+- A final scope audit confirms no Virtual Filesystem, file workflow, persistent data, deferred application/service, backend, or scenario behavior entered M3.
+
+## Recommended Implementation Order
+
+1. Add pure Notepad and Calculator models with focused unit tests.
+2. Add the three application definitions/views and inject the existing Clock through composition.
+3. Replace permanent application buttons with the registry-backed App Drawer while preserving task-strip behavior.
+4. Add the typed desktop context-menu model/view and shell command dispatch.
+5. Add projection-only Refresh Desktop and lock its state-preservation tests.
+6. Complete responsive/accessibility styling and Playwright workflows incrementally.
+7. Run all quality gates, manual verification, and strict M3/M4 scope review before declaring implementation ready.
+
+## Planning Outcome
+
+The existing M2 ownership model is sufficient for M3. No new global state store, application catalog, launcher service, context-menu domain service, clock source, persistence mechanism, filesystem substitute, or external dependency is justified. M3 implementation should extend the composition root with three definitions, add instance-local application models/views, and add disposable shell projections for the drawer and desktop context menu.
+
+No M3 source code, tests, styles, package files, workflows, configuration, application implementations, release, tag, PR, merge, or deployment was created during this planning session.
+
+---
+
+# M3 Phase 1 — Shell Foundation Implementation + Visual Refinement
+
+- **Date:** 2026-09-28
+- **Branch:** `feature/m3-applications-os-experience`
+- **Implementation commit:** `ad088e41dd6c99faf5ae764036b5167271e0e219`
+- **Visual refinement commit:** `41113dd9a618c1eeddb025621c7ffb894b411ce9`
+- **Checkpoint status:** M3 Phase 1 implemented and manually verified; Milestone 3 remains in progress
+
+## Scope Implemented
+
+- Added a registry-backed floating Application Drawer/Launcher.
+- Kept the task strip limited to running windows.
+- Added a scoped SHADOW OS desktop context menu.
+- Added projection-only Refresh Desktop behavior.
+- Preserved accessible keyboard interaction, focus recovery, and overlay dismissal.
+- Added responsive launcher and context-menu behavior.
+- Refined the launcher into a compact floating SHADOW OS surface.
+- Refined the context menu into a minimal two-action command surface.
+
+## Architecture
+
+- `ApplicationRegistry` remains the sole installed-application catalog.
+- `ApplicationManager` remains responsible for application launch and lifecycle.
+- `WindowManager` remains responsible for windows, focus, geometry, and z-order.
+- The drawer and context menu remain disposable shell views/overlays owned by `DesktopView`.
+- The task strip represents running windows rather than installed applications.
+- Context-menu interception remains scoped to registered desktop surfaces; application content retains native browser context-menu behavior.
+- Refresh Desktop performs projection/reconciliation only. It does not reload the page, reset the runtime, or mutate application/window manager state.
+- No new global service, dependency, persistence mechanism, filesystem behavior, or application architecture was introduced.
+
+## Visual Refinement
+
+Manual review of the initial Phase 1 presentation led to a focused visual pass:
+
+- The App Drawer became a compact floating launcher above the task strip.
+- Its single-application state was deliberately composed as a bounded application tile rather than an empty large panel.
+- The context menu became a compact two-action SHADOW OS command surface containing Refresh Desktop and Applications.
+- The refinement was CSS-led, with typed presentation symbols rendered separately from accessible action names.
+- Existing behavior, ownership boundaries, and application/window architecture were preserved.
+
+## Verification
+
+- Prettier: PASS
+- Strict TypeScript: PASS
+- ESLint: PASS
+- Vitest: 38 tests PASS across 9 files
+- Production build: PASS
+- Playwright Chromium: 16 tests PASS
+
+Manual viewport inspection passed at 1440px, 1024px, 768px, and 360 × 740. The launcher and context menu remained contained without clipping or horizontal page overflow. Launcher opening and launching, context-menu edge clamping, keyboard/focus behavior, and the existing window interactions remained functional. Refresh Desktop did not reload the browser or disturb open application/window state. Right-click inside application content retained the native browser context menu, and restart returned SHADOW OS to a clean desktop.
+
+Reduced-motion behavior passed the existing automated Playwright coverage. Manual reduced-motion verification was not performed for this checkpoint.
+
+## Remaining M3 Work
+
+Milestone 3 is not complete. Remaining work includes:
+
+- Notepad.
+- Calculator.
+- Clock.
+- Broader M3 integration.
+- Final accessibility and manual acceptance.
+- Final M3 quality-gate audit.
+- M3 documentation and milestone closure.
+
+## Commit References
+
+- `ad088e41dd6c99faf5ae764036b5167271e0e219` — `feat: add M3 application launcher and context menu`
+- `41113dd9a618c1eeddb025621c7ffb894b411ce9` — `style: refine M3 launcher and context menu`
+
+## Scope Review
+
+This checkpoint introduced no Notepad, Calculator, Clock, Settings, virtual filesystem, persistence, scenarios, networking, backend, account, release, or version changes. It records the timeline from M3 planning through Phase 1 implementation and visual refinement while leaving the remaining M3 application work explicit.
+
+---
+
+# M3 Phase 2A — Notepad Implementation
+
+- **Date:** 2026-09-28
+- **Branch:** `feature/m3-applications-os-experience`
+- **Checkpoint status:** Notepad implemented and manually verified; Milestone 3 remains in progress
+
+## Scope Implemented
+
+- Added Notepad as a startup-registered application discovered through the existing App Drawer.
+- Added a pure instance-local text model with blank initial state and explicit disposal cleanup.
+- Added a native multiline textarea with browser-provided editing, selection, cursor movement, clipboard, and undo/redo behavior.
+- Added a restrained SHADOW OS editor surface with visible focus and responsive sizing.
+- Preserved text while the single running instance is focused, moved, resized, minimized, restored, maximized, or reconciled through Refresh Desktop.
+- Discarded text when Notepad closes or SHADOW OS restarts; reopening creates a fresh blank instance.
+
+## Architecture
+
+- `ApplicationRegistry` remains the sole application catalog, and `ApplicationManager` remains the launch/lifecycle authority.
+- Notepad uses the existing `ApplicationView.mount(host, document)` contract and the existing single-instance application policy.
+- `WindowManager` remains the sole owner of Notepad window geometry, mode, focus, and z-order.
+- Mutable text is owned only by the running Notepad instance and is synchronized from the native editor into its model.
+- No framework contract, application context, global service, dependency, filesystem abstraction, or persistence mechanism was added.
+
+## Tests Added
+
+- Unit tests cover blank initial state, multiline edits, replacement, and disposal cleanup.
+- Service integration covers registration, manager-backed launch, single-instance relaunch, close/reopen identity, and reset cleanup.
+- Playwright covers drawer discovery, launch, initial focus, multiline editing and selection, Escape behavior, task-strip projection, single-instance relaunch, move/resize, minimize/restore, maximize/restore, Refresh Desktop retention, native editor context menus, close/fresh reopen, restart cleanup, and mobile containment.
+
+## Verification
+
+- Prettier: PASS
+- Strict TypeScript: PASS
+- ESLint: PASS
+- Vitest: 41 tests PASS across 10 files
+- Production build: PASS
+- Playwright Chromium: 18 tests PASS
+
+Manual verification passed at 1280px desktop and 360 × 740 mobile. The App Drawer listed both System Diagnostics and Notepad. Typing, multiline text, selection, native editing, keyboard focus, move/resize, minimize/restore, maximize/restore, Refresh Desktop, close/reopen, restart, task-strip behavior, and responsive active-window presentation worked without clipping or horizontal overflow. Right-click inside the editor retained the native browser context menu. Existing M3 Phase 1 and System Diagnostics workflows remained functional.
+
+Reduced-motion behavior remained covered by the existing automated Playwright workflow; manual reduced-motion verification was not performed for this checkpoint.
+
+## M3/M4 Leakage Audit
+
+Notepad introduces no Save, Save As, Open, file picker, file path, file/folder model, virtual filesystem, local or browser storage, cookies, URL state, backend call, shared file state, or other persistence behavior. Text exists only for the running application instance.
+
+## Remaining M3 Work
+
+Milestone 3 is not complete. Calculator and Clock remain unimplemented. Broader M3 integration, final accessibility/manual acceptance, the final M3 quality-gate audit, and M3 documentation/milestone closure also remain outstanding.
+
+---
+
+# M3 Phase 2B — Calculator Implementation
+
+- **Date:** 2026-09-28
+- **Branch:** `feature/m3-applications-os-experience`
+- **Checkpoint status:** Calculator implemented and manually verified; Milestone 3 remains in progress
+
+## Scope Implemented
+
+- Added Calculator as a startup-registered application discovered through the existing App Drawer.
+- Added a compact four-operation SHADOW OS interface with semantic digit, decimal, operator, clear, backspace, and equals buttons.
+- Added direct keyboard input for digits, decimal, `+`, `-`, `*`, `/`, `Enter`, `=`, `Escape`, `C`, `Backspace`, and `Delete` while preserving native Tab navigation.
+- Added accessible button names, a live labeled display, visible keyboard focus, and a concise visible `ERROR` state.
+- Preserved state while the single running instance is focused, moved, resized, minimized, restored, maximized, or reconciled through Refresh Desktop.
+- Discarded calculations when Calculator closes or SHADOW OS restarts; reopening creates a fresh instance displaying zero.
+
+## Architecture
+
+- `ApplicationRegistry` remains the sole application catalog, and `ApplicationManager` remains the launch/lifecycle authority.
+- Calculator uses the existing `ApplicationView.mount(host, document)` contract and single-instance application policy.
+- `WindowManager` remains the sole owner of Calculator window geometry, mode, focus, and z-order.
+- Arithmetic state is owned by a pure DOM-independent `CalculatorModel` created for each running application instance.
+- The existing Clock abstraction, framework contracts, application context, global services, shell projections, and dependency graph remain unchanged.
+
+## State-Machine Decisions
+
+- Operations execute immediately from left to right, matching a conventional pocket calculator rather than expression precedence. For example, `12 + 5 × 2` produces `34`.
+- Choosing another operator before entering the right operand replaces the pending operator.
+- Repeated equals reapplies the last completed operator and right operand.
+- Division by zero and non-finite arithmetic enter `ERROR`; Clear or a new numeric entry recovers deterministically.
+- Direct entry is limited to 12 characters. Results are normalized to 12 significant digits and use compact scientific notation when needed to stay within a 16-character display budget.
+- No evaluated expression string, parser, calculation history, memory, percentage, or scientific operation was introduced.
+
+## Tests Added
+
+- Sixteen pure-model tests cover initial state, digit and multi-digit entry, decimals, all four operations, immediate chained evaluation, equals, clear, backspace, negative results, division by zero, operator replacement, repeated equals, malformed decimal prevention, bounded large-number formatting, recovery, and disposal.
+- Service integration covers Calculator registration, manager-backed launch, window title, single-instance relaunch, close/fresh reopen identity, and reset cleanup.
+- Playwright covers drawer discovery, launch, initial focus, task-strip projection, pointer addition/subtraction/multiplication/division, decimal arithmetic, clear, backspace, visible error and recovery, keyboard input, Escape handling, single-instance restore, close/fresh reopen, restart cleanup, and mobile containment.
+
+## Verification
+
+- Prettier: PASS
+- Strict TypeScript: PASS
+- ESLint: PASS
+- Vitest: 58 tests PASS across 11 files
+- Production build: PASS
+- Playwright Chromium: 20 tests PASS
+
+Manual verification passed at 1280 × 800 desktop and 360 × 740 mobile. App Drawer launch, pointer and keyboard arithmetic, decimals, division by zero, clear, backspace, initial focus, task-strip behavior, move/resize, minimize/restore, maximize/restore, existing-instance focus, Refresh Desktop retention, close/fresh reopen, restart cleanup, and responsive containment worked without clipping or horizontal overflow. Existing Notes editing, System Diagnostics, the desktop context menu, and Refresh Desktop remained functional with no console errors, page errors, or failed requests.
+
+Reduced-motion behavior remains covered by the existing automated Playwright workflow; manual reduced-motion verification was not performed for this checkpoint.
+
+## M3/M4 Leakage Audit
+
+Calculator introduces no filesystem or file model, persistence, `localStorage`, IndexedDB, cookies, backend or network call, shared file state, new global service, external dependency, advanced expression parser, history, memory, Settings, Browser, Clock implementation, or M4 process behavior. Calculator state exists only for the running application instance.
+
+## Remaining M3 Work
+
+Milestone 3 is not complete. Clock remains unimplemented. Broader M3 integration, final accessibility/manual acceptance, the final M3 quality-gate audit, and M3 documentation/milestone closure also remain outstanding.
+
+---
+
+# M3 Phase 2C — Clock Implementation
+
+- **Date:** 2026-09-28
+- **Branch:** `feature/m3-applications-os-experience`
+- **Checkpoint status:** Clock implemented and manually verified; Milestone 3 remains in progress
+
+## Scope Implemented
+
+- Added Clock as a startup-registered application discovered through the existing App Drawer.
+- Added a compact SHADOW OS digital clock view with dominant 24-hour time including seconds and a secondary local date.
+- Added semantic time/date elements with explicit accessible names and machine-readable values.
+- Preserved the live display while the single running instance is focused, moved, resized, minimized, restored, maximized, or reconciled through Refresh Desktop.
+- Stopped application-owned updates on close/reset and created one fresh update lifecycle when Clock reopened.
+
+## Existing Clock Integration
+
+- The composition root injects the existing M1 `Clock` into `createClockDefinition(clock)`; `ApplicationContext` and global runtime contracts remain unchanged.
+- An instance-local `ClockModel` reads only `Clock.now()`, schedules only through `Clock.schedule()`, and reuses the existing pure `formatSystemTime` presentation convention.
+- Clock uses the existing `ApplicationView.mount(host, document)` contract, registry catalog, manager single-instance policy, and WindowManager geometry/focus lifecycle.
+- The application contains no direct `Date.now()`, `new Date()`, browser timer source, or second clock service.
+
+## Update and Disposal Behavior
+
+- The model aligns each update to the next whole-second boundary and keeps at most one scheduled callback while subscribed.
+- Multiple subscribers share that single scheduled callback.
+- Final unsubscribe and instance disposal both cancel the pending callback idempotently.
+- Closing Clock returns browser timer activity to its pre-launch baseline; relaunch adds exactly one fresh Clock timer rather than accumulating callbacks.
+- Restart/reset disposes the running instance and leaves no Clock window, task entry, subscription, or scheduled application update.
+
+## Tests Added
+
+- Six deterministic model tests cover fixed injected formatting, second-boundary alignment, repeated ticking, local midnight rollover, one-task sharing, final-unsubscribe cancellation, disposal, rejected post-disposal subscriptions, and reopen without timer accumulation.
+- Service integration covers Clock registration, manager-backed launch, window title, single-instance relaunch, close/fresh reopen identity, and reset cleanup.
+- Playwright covers drawer discovery, launch, accessible time/date values, live updates without fixed wall-clock assumptions, task-strip projection, single-instance relaunch, minimize/restore, close/reopen, browser timer-count cleanup, restart disposal, mobile active-window containment, and horizontal-overflow prevention.
+
+## Verification
+
+- Prettier: PASS
+- Strict TypeScript: PASS
+- ESLint: PASS
+- Vitest: 71 tests PASS across 12 files
+- Production build: PASS
+- Playwright Chromium: 23 tests PASS
+
+Manual verification passed at 1280 × 800, 1024 × 768, 768 × 720, and 360 × 740. App Drawer launch, synchronized application/system time, local date, visible ticking, initial focus, task-strip behavior, move/resize, minimize/restore, maximize/restore, existing-instance focus, Refresh Desktop retention, close/fresh reopen, restart cleanup, and responsive containment worked without clipping or horizontal overflow. Existing Notes editing, Calculator pointer/keyboard arithmetic, System Diagnostics, the desktop context menu, Refresh Desktop, and window controls remained functional with no observed browser errors.
+
+Reduced-motion behavior remains covered by the existing automated Playwright workflow; manual reduced-motion verification was not performed for this checkpoint.
+
+## M3/M4 Leakage Audit
+
+Clock introduces no filesystem or file model, persistence, `localStorage`, IndexedDB, cookies, backend or network call, shared state service, global ticking service, external dependency, Calendar behavior, timezone configuration, user setting, alarm, timer, stopwatch, world clock, weather, or M4 process behavior. Its only time source is the existing injected OS `Clock`.
+
+## Remaining M3 Work
+
+Milestone 3 is not complete. Broader M3 integration, final accessibility/manual acceptance, the final M3 quality-gate audit, and M3 documentation/milestone closure remain outstanding. No final integration or closure work was started in this phase.

@@ -23,8 +23,17 @@ async function openDesktop(page: Page): Promise<string[]> {
   return failures;
 }
 
+async function openAppDrawer(page: Page): Promise<void> {
+  await page.getByRole("button", { name: "Applications" }).click();
+  await expect(page.getByRole("dialog", { name: "Applications" })).toBeVisible();
+}
+
 async function launchDiagnostics(page: Page): Promise<void> {
-  await page.getByRole("button", { name: "System Diagnostics" }).click();
+  await openAppDrawer(page);
+  await page
+    .getByRole("dialog", { name: "Applications" })
+    .getByRole("button", { name: /System Diagnostics/ })
+    .click();
   await expect(page.getByRole("dialog", { name: "System Diagnostics" })).toBeVisible();
 }
 
@@ -32,14 +41,12 @@ test("launches one application instance and coordinates multiple owned windows",
   page,
 }) => {
   const failures = await openDesktop(page);
-  const launcher = page.getByRole("button", { name: "System Diagnostics", exact: true });
-
-  await launcher.click();
+  await launchDiagnostics(page);
   const primary = page.getByRole("dialog", { name: "System Diagnostics" });
   await expect(primary).toBeVisible();
   await expect(primary).toContainText("application-instance-1");
 
-  await launcher.click();
+  await launchDiagnostics(page);
   await expect(page.getByRole("dialog")).toHaveCount(1);
   await expect(primary).toHaveAttribute("data-active", "true");
 
@@ -105,14 +112,20 @@ test("minimizes, restores, maximizes, restores, and closes a window", async ({ p
 
   await dialog.getByRole("button", { name: "Close window" }).click();
   await expect(dialog).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "System Diagnostics" })).toBeFocused();
+  await expect(page.getByRole("button", { name: "Applications" })).toBeFocused();
   expect(failures).toEqual([]);
 });
 
 test("supports keyboard launch and window controls without global shortcuts", async ({ page }) => {
   const failures = await openDesktop(page);
-  const launcher = page.getByRole("button", { name: "System Diagnostics" });
+  const launcher = page.getByRole("button", { name: "Applications" });
   await launcher.focus();
+  await page.keyboard.press("Enter");
+  await expect(
+    page
+      .getByRole("dialog", { name: "Applications" })
+      .getByRole("button", { name: /System Diagnostics/ }),
+  ).toBeFocused();
   await page.keyboard.press("Enter");
 
   const dialog = page.getByRole("dialog", { name: "System Diagnostics" });

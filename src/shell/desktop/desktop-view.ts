@@ -1,12 +1,15 @@
 import type { ApplicationManager } from "../../applications/framework/application-manager";
 import type { ApplicationRegistry } from "../../applications/framework/application-registry";
 import type { Disposable } from "../../core/disposable";
-import { toApplicationId, toWindowId } from "../../core/identity/identifiers";
+import { toWindowId } from "../../core/identity/identifiers";
 import type { ShadowRuntime } from "../../core/runtime/shadow-runtime";
 import type { Clock } from "../../core/time/clock";
 import type { WindowManager } from "../windows/window-manager";
 import { WindowLayerView } from "../windows/window-layer-view";
 import { formatSystemTime } from "../system-time";
+import { ApplicationDrawerView } from "./application-drawer-view";
+import type { DesktopContextMenuActionId } from "./context-menu-model";
+import { ContextMenuView } from "./context-menu-view";
 
 const CLOCK_UPDATE_INTERVAL_MS = 1_000;
 
@@ -15,17 +18,19 @@ export class DesktopView {
   readonly #document: Document;
   readonly #runtime: ShadowRuntime;
   readonly #clock: Clock;
-  readonly #registry: ApplicationRegistry;
-  readonly #applicationManager: ApplicationManager;
   readonly #windowManager: WindowManager;
   readonly #windowLayer: WindowLayerView;
-  readonly #launcher: HTMLElement;
+  readonly #workspace: HTMLElement;
+  readonly #drawer: ApplicationDrawerView;
+  readonly #contextMenu: ContextMenuView;
   readonly #taskStrip: HTMLElement;
   readonly #time: HTMLTimeElement;
   readonly #date: HTMLElement;
+  readonly #status: HTMLElement;
   readonly #resetButton: HTMLButtonElement;
   #cancelClock: Disposable | null = null;
   #unsubscribeWindows: Disposable | null = null;
+  #refreshCount = 0;
 
   constructor(
     document: Document,
@@ -40,8 +45,6 @@ export class DesktopView {
     this.#document = document;
     this.#runtime = runtime;
     this.#clock = clock;
-    this.#registry = registry;
-    this.#applicationManager = applicationManager;
     this.#windowManager = windowManager;
 
     const main = element(document, "main", "desktop-shell");
@@ -58,6 +61,8 @@ export class DesktopView {
 
     const workspace = element(document, "section", "desktop-shell__workspace");
     workspace.setAttribute("aria-label", "SHADOW OS desktop work area");
+    workspace.dataset.contextSurface = "desktop";
+    workspace.tabIndex = 0;
     const desktopIdentity = element(document, "div", "desktop-shell__identity");
     desktopIdentity.setAttribute("aria-hidden", "true");
     desktopIdentity.append(
@@ -74,10 +79,21 @@ export class DesktopView {
     windowLayer.setAttribute("aria-label", "Open application windows");
     workspace.append(desktopIdentity, windowLayer);
 
+    this.#workspace = workspace;
+    this.#drawer = new ApplicationDrawerView(document, registry, applicationManager);
+    this.#contextMenu = new ContextMenuView(
+      document,
+      browserWindow,
+      [
+        { id: "refresh-desktop", label: "Refresh Desktop", symbol: "↻" },
+        { id: "open-application-drawer", label: "Applications", symbol: "◇" },
+      ],
+      this.#handleContextAction,
+    );
+
     const footer = element(document, "footer", "desktop-shell__footer");
-    this.#launcher = element(document, "nav", "application-launcher");
-    this.#launcher.setAttribute("aria-label", "Applications");
-    this.#renderLauncher();
+    const launcher = element(document, "div", "application-launcher");
+    launcher.append(this.#drawer.trigger);
     this.#taskStrip = element(document, "nav", "window-task-strip");
     this.#taskStrip.setAttribute("aria-label", "Open windows");
     const clockPanel = element(document, "section", "system-clock");
@@ -87,8 +103,18 @@ export class DesktopView {
     clockPanel.append(this.#time, this.#date);
     this.#resetButton = element(document, "button", "desktop-shell__reset", "Restart SHADOW OS");
     this.#resetButton.type = "button";
-    footer.append(this.#launcher, this.#taskStrip, clockPanel, this.#resetButton);
-    main.append(header, workspace, footer);
+    this.#status = element(document, "p", "visually-hidden");
+    this.#status.setAttribute("role", "status");
+    this.#status.setAttribute("aria-live", "polite");
+    footer.append(launcher, this.#taskStrip, clockPanel, this.#resetButton);
+    main.append(
+      header,
+      workspace,
+      this.#drawer.element,
+      this.#contextMenu.element,
+      footer,
+      this.#status,
+    );
 
     this.element = main;
     this.#windowLayer = new WindowLayerView(
@@ -101,7 +127,9 @@ export class DesktopView {
   }
 
   mount(): Disposable {
-    this.#launcher.addEventListener("click", this.#handleLauncherClick);
+    const disposeDrawer = this.#drawer.mount();
+    const disposeContextMenu = this.#contextMenu.mount();
+    this.#workspace.addEventListener("contextmenu", this.#handleDesktopContextMenu);
     this.#taskStrip.addEventListener("click", this.#handleTaskClick);
     this.#resetButton.addEventListener("click", this.#handleReset);
     this.#unsubscribeWindows = this.#windowManager.onStateChanged((event) => {
@@ -114,7 +142,7 @@ export class DesktopView {
       }
 
       if (event.reason === "window-closed" && !event.snapshot.activeWindowId) {
-        this.#launcher.querySelector<HTMLButtonElement>("[data-application-id]")?.focus();
+        this.#drawer.trigger.focus();
       }
     });
     const disposeWindowLayer = this.#windowLayer.mount();
@@ -122,32 +150,17 @@ export class DesktopView {
     this.#updateClock();
 
     return () => {
-      this.#launcher.removeEventListener("click", this.#handleLauncherClick);
+      this.#workspace.removeEventListener("contextmenu", this.#handleDesktopContextMenu);
       this.#taskStrip.removeEventListener("click", this.#handleTaskClick);
       this.#resetButton.removeEventListener("click", this.#handleReset);
       this.#unsubscribeWindows?.();
       this.#unsubscribeWindows = null;
       this.#cancelClock?.();
       this.#cancelClock = null;
+      disposeContextMenu();
+      disposeDrawer();
       disposeWindowLayer();
     };
-  }
-
-  #renderLauncher(): void {
-    const label = element(this.#document, "span", "application-launcher__label", "APPS");
-    const buttons = this.#registry.list().map((manifest) => {
-      const button = element(
-        this.#document,
-        "button",
-        "application-launcher__button",
-        manifest.name,
-      );
-      button.type = "button";
-      button.dataset.applicationId = manifest.id;
-      button.title = manifest.description;
-      return button;
-    });
-    this.#launcher.replaceChildren(label, ...buttons);
   }
 
   #renderTasks(): void {
@@ -173,19 +186,60 @@ export class DesktopView {
   }
 
   #updateClock(): void {
+    this.#renderClock();
+    this.#cancelClock = this.#clock.schedule(() => this.#updateClock(), CLOCK_UPDATE_INTERVAL_MS);
+  }
+
+  #renderClock(): void {
     const systemTime = formatSystemTime(this.#clock.now());
     this.#time.dateTime = systemTime.iso;
     this.#time.textContent = systemTime.time;
     this.#date.textContent = systemTime.date;
-    this.#cancelClock = this.#clock.schedule(() => this.#updateClock(), CLOCK_UPDATE_INTERVAL_MS);
   }
 
-  readonly #handleLauncherClick = (event: MouseEvent): void => {
+  #refreshDesktop(invoker: HTMLElement | null): void {
+    this.#contextMenu.close(false);
+    this.#drawer.close(false);
+    this.#drawer.refresh();
+    this.#renderTasks();
+    this.#windowLayer.render();
+    this.#renderClock();
+    this.#refreshCount += 1;
+    this.#status.textContent = `Desktop refreshed ${this.#refreshCount.toString()}`;
+    if (invoker?.isConnected) {
+      invoker.focus({ preventScroll: true });
+    }
+  }
+
+  readonly #handleDesktopContextMenu = (event: MouseEvent): void => {
     const target = event.target instanceof Element ? event.target : null;
-    const applicationId =
-      target?.closest<HTMLElement>("[data-application-id]")?.dataset.applicationId;
-    if (applicationId) {
-      this.#applicationManager.launch(toApplicationId(applicationId));
+    if (target?.closest(".os-window")) {
+      return;
+    }
+
+    event.preventDefault();
+    this.#drawer.close(false);
+    const invoker =
+      this.#document.activeElement instanceof HTMLElement
+        ? this.#document.activeElement
+        : this.#workspace;
+    const workspaceBounds = this.#workspace.getBoundingClientRect();
+    const keyboardInvocation = event.clientX === 0 && event.clientY === 0;
+    this.#contextMenu.open(
+      keyboardInvocation ? workspaceBounds.left + 16 : event.clientX,
+      keyboardInvocation ? workspaceBounds.top + 16 : event.clientY,
+      invoker,
+    );
+  };
+
+  readonly #handleContextAction = (
+    actionId: DesktopContextMenuActionId,
+    invoker: HTMLElement | null,
+  ): void => {
+    if (actionId === "open-application-drawer") {
+      this.#drawer.open();
+    } else {
+      this.#refreshDesktop(invoker);
     }
   };
 
