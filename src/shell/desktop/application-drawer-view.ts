@@ -232,6 +232,10 @@ export class ApplicationDrawerView {
 }
 
 function markerFor(name: string): string {
+  if (name === "Notes") {
+    return "✎";
+  }
+
   const marker = name
     .trim()
     .split(/\s+/)

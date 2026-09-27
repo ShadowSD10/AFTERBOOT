@@ -8,10 +8,10 @@ export function createNotepadDefinition(): ApplicationDefinition {
   return {
     manifest: {
       id: NOTEPAD_APPLICATION_ID,
-      name: "Notepad",
+      name: "Notes",
       description: "Write and edit temporary session text.",
       window: {
-        title: "Notepad",
+        title: "Notes",
         preferredWidth: 620,
         preferredHeight: 440,
         constraints: { minWidth: 320, minHeight: 240 },
@@ -38,7 +38,7 @@ function createNotepadView(model: NotepadModel): ApplicationView {
       editor.className = "notepad-app__editor";
       editor.value = model.text;
       editor.placeholder = "Start typing...";
-      editor.setAttribute("aria-label", "Notepad editor");
+      editor.setAttribute("aria-label", "Notes editor");
 
       const handleInput = (): void => model.setText(editor.value);
       editor.addEventListener("input", handleInput);

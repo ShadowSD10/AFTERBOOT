@@ -18,7 +18,7 @@ describe("application and window lifecycle", () => {
     const windows = new WindowManager(ids, { x: 0, y: 0, width: 1000, height: 700 });
     const applications = new ApplicationManager(registry, windows, ids);
 
-    expect(registry.list().map((manifest) => manifest.name)).toEqual(["Notepad"]);
+    expect(registry.list().map((manifest) => manifest.name)).toEqual(["Notes"]);
 
     const firstInstanceId = applications.launch(NOTEPAD_APPLICATION_ID);
     const firstWindowId = applications.snapshot.instances[0]!.primaryWindowId;
@@ -27,7 +27,7 @@ describe("application and window lifecycle", () => {
     expect(applications.snapshot.instances).toHaveLength(1);
     expect(windows.snapshot.windows[0]).toMatchObject({
       id: firstWindowId,
-      title: "Notepad",
+      title: "Notes",
     });
 
     expect(applications.closeWindow(firstWindowId)).toBe(true);

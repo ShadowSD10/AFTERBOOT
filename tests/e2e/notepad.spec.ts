@@ -25,18 +25,22 @@ async function openDesktop(page: Page): Promise<string[]> {
 async function launchNotepad(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Applications" }).click();
   const drawer = page.getByRole("dialog", { name: "Applications" });
-  await expect(drawer.getByRole("button", { name: "Notepad" })).toBeVisible();
-  await drawer.getByRole("button", { name: "Notepad" }).click();
-  await expect(page.getByRole("dialog", { name: "Notepad" })).toBeVisible();
+  const notesEntry = drawer.getByRole("button", { name: "Notes" });
+  const marker = notesEntry.locator(".application-drawer__marker");
+  await expect(notesEntry).toBeVisible();
+  await expect(marker).toHaveText("✎");
+  await expect(marker).toHaveAttribute("aria-hidden", "true");
+  await notesEntry.click();
+  await expect(page.getByRole("dialog", { name: "Notes" })).toBeVisible();
 }
 
 test("edits temporary text through one running Notepad instance", async ({ page }) => {
   const failures = await openDesktop(page);
   await launchNotepad(page);
 
-  const notepad = page.getByRole("dialog", { name: "Notepad" });
-  const editor = page.getByRole("textbox", { name: "Notepad editor" });
-  const task = page.getByRole("button", { name: "Focus Notepad" });
+  const notepad = page.getByRole("dialog", { name: "Notes" });
+  const editor = page.getByRole("textbox", { name: "Notes editor" });
+  const task = page.getByRole("button", { name: "Focus Notes" });
   await expect(editor).toBeFocused();
   await expect(task).toHaveCount(1);
 
@@ -49,7 +53,7 @@ test("edits temporary text through one running Notepad instance", async ({ page 
   await expect(editor).toHaveValue("Revised text\nWith two lines");
 
   await launchNotepad(page);
-  await expect(page.getByRole("dialog", { name: "Notepad" })).toHaveCount(1);
+  await expect(page.getByRole("dialog", { name: "Notes" })).toHaveCount(1);
   await expect(task).toHaveCount(1);
   await expect(editor).toHaveValue("Revised text\nWith two lines");
 
@@ -81,7 +85,7 @@ test("edits temporary text through one running Notepad instance", async ({ page 
 
   await notepad.getByRole("button", { name: "Minimize window" }).click();
   await expect(notepad).toBeHidden();
-  await page.getByRole("button", { name: "Restore Notepad" }).click();
+  await page.getByRole("button", { name: "Restore Notes" }).click();
   await expect(notepad).toBeVisible();
   await expect(editor).toHaveValue("Revised text\nWith two lines");
 
@@ -103,8 +107,8 @@ test("edits temporary text through one running Notepad instance", async ({ page 
   await expect(task).toHaveCount(0);
 
   await launchNotepad(page);
-  await expect(page.getByRole("textbox", { name: "Notepad editor" })).toBeFocused();
-  await expect(page.getByRole("textbox", { name: "Notepad editor" })).toHaveValue("");
+  await expect(page.getByRole("textbox", { name: "Notes editor" })).toBeFocused();
+  await expect(page.getByRole("textbox", { name: "Notes editor" })).toHaveValue("");
   expect(failures).toEqual([]);
 });
 
@@ -115,10 +119,10 @@ test("discards Notepad text on restart and remains usable on mobile", async ({ p
   await page.getByRole("button", { name: "Skip boot sequence" }).click();
   await launchNotepad(page);
 
-  const editor = page.getByRole("textbox", { name: "Notepad editor" });
+  const editor = page.getByRole("textbox", { name: "Notes editor" });
   await editor.fill("Temporary mobile text");
   await expect(editor).toHaveValue("Temporary mobile text");
-  const mobileBounds = await page.getByRole("dialog", { name: "Notepad" }).evaluate((notepad) => {
+  const mobileBounds = await page.getByRole("dialog", { name: "Notes" }).evaluate((notepad) => {
     const windowBounds = notepad.getBoundingClientRect();
     const workAreaBounds = notepad.parentElement!.getBoundingClientRect();
     const bounds = (rect: DOMRect): Record<"x" | "y" | "width" | "height", number> => ({
@@ -134,7 +138,7 @@ test("discards Notepad text on restart and remains usable on mobile", async ({ p
   await page.getByRole("button", { name: "Restart SHADOW OS" }).click();
   await page.getByRole("button", { name: "Skip boot sequence" }).click();
   await launchNotepad(page);
-  await expect(page.getByRole("textbox", { name: "Notepad editor" })).toHaveValue("");
+  await expect(page.getByRole("textbox", { name: "Notes editor" })).toHaveValue("");
 
   const pageSize = await page.locator("body").evaluate((body) => ({
     scrollWidth: body.scrollWidth,
