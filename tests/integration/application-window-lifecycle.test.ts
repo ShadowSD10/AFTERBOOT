@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
+import {
+  createNotepadDefinition,
+  NOTEPAD_APPLICATION_ID,
+} from "../../src/applications/built-in/notepad";
 import type { ApplicationContext } from "../../src/applications/framework/application";
 import { ApplicationManager } from "../../src/applications/framework/application-manager";
 import { ApplicationRegistry } from "../../src/applications/framework/application-registry";
@@ -8,6 +12,36 @@ import { WindowManager } from "../../src/shell/windows/window-manager";
 import { FakeIdGenerator } from "../helpers/fake-id-generator";
 
 describe("application and window lifecycle", () => {
+  it("registers Notepad and gives each closed or reset lifecycle a fresh instance", () => {
+    const registry = new ApplicationRegistry([createNotepadDefinition()]);
+    const ids = new FakeIdGenerator();
+    const windows = new WindowManager(ids, { x: 0, y: 0, width: 1000, height: 700 });
+    const applications = new ApplicationManager(registry, windows, ids);
+
+    expect(registry.list().map((manifest) => manifest.name)).toEqual(["Notepad"]);
+
+    const firstInstanceId = applications.launch(NOTEPAD_APPLICATION_ID);
+    const firstWindowId = applications.snapshot.instances[0]!.primaryWindowId;
+
+    expect(applications.launch(NOTEPAD_APPLICATION_ID)).toBe(firstInstanceId);
+    expect(applications.snapshot.instances).toHaveLength(1);
+    expect(windows.snapshot.windows[0]).toMatchObject({
+      id: firstWindowId,
+      title: "Notepad",
+    });
+
+    expect(applications.closeWindow(firstWindowId)).toBe(true);
+    expect(applications.snapshot.instances).toEqual([]);
+    expect(windows.snapshot.windows).toEqual([]);
+
+    const secondInstanceId = applications.launch(NOTEPAD_APPLICATION_ID);
+    expect(secondInstanceId).not.toBe(firstInstanceId);
+
+    applications.reset();
+    expect(applications.snapshot.instances).toEqual([]);
+    expect(windows.snapshot.windows).toEqual([]);
+  });
+
   it("launches the registry catalog through the manager without duplicating an instance", () => {
     const applicationId = toApplicationId("system.diagnostics");
     const registry = new ApplicationRegistry([

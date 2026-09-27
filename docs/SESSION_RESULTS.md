@@ -1120,3 +1120,55 @@ Milestone 3 is not complete. Remaining work includes:
 ## Scope Review
 
 This checkpoint introduced no Notepad, Calculator, Clock, Settings, virtual filesystem, persistence, scenarios, networking, backend, account, release, or version changes. It records the timeline from M3 planning through Phase 1 implementation and visual refinement while leaving the remaining M3 application work explicit.
+
+---
+
+# M3 Phase 2A — Notepad Implementation
+
+- **Date:** 2026-09-28
+- **Branch:** `feature/m3-applications-os-experience`
+- **Checkpoint status:** Notepad implemented and manually verified; Milestone 3 remains in progress
+
+## Scope Implemented
+
+- Added Notepad as a startup-registered application discovered through the existing App Drawer.
+- Added a pure instance-local text model with blank initial state and explicit disposal cleanup.
+- Added a native multiline textarea with browser-provided editing, selection, cursor movement, clipboard, and undo/redo behavior.
+- Added a restrained SHADOW OS editor surface with visible focus and responsive sizing.
+- Preserved text while the single running instance is focused, moved, resized, minimized, restored, maximized, or reconciled through Refresh Desktop.
+- Discarded text when Notepad closes or SHADOW OS restarts; reopening creates a fresh blank instance.
+
+## Architecture
+
+- `ApplicationRegistry` remains the sole application catalog, and `ApplicationManager` remains the launch/lifecycle authority.
+- Notepad uses the existing `ApplicationView.mount(host, document)` contract and the existing single-instance application policy.
+- `WindowManager` remains the sole owner of Notepad window geometry, mode, focus, and z-order.
+- Mutable text is owned only by the running Notepad instance and is synchronized from the native editor into its model.
+- No framework contract, application context, global service, dependency, filesystem abstraction, or persistence mechanism was added.
+
+## Tests Added
+
+- Unit tests cover blank initial state, multiline edits, replacement, and disposal cleanup.
+- Service integration covers registration, manager-backed launch, single-instance relaunch, close/reopen identity, and reset cleanup.
+- Playwright covers drawer discovery, launch, initial focus, multiline editing and selection, Escape behavior, task-strip projection, single-instance relaunch, move/resize, minimize/restore, maximize/restore, Refresh Desktop retention, native editor context menus, close/fresh reopen, restart cleanup, and mobile containment.
+
+## Verification
+
+- Prettier: PASS
+- Strict TypeScript: PASS
+- ESLint: PASS
+- Vitest: 41 tests PASS across 10 files
+- Production build: PASS
+- Playwright Chromium: 18 tests PASS
+
+Manual verification passed at 1280px desktop and 360 × 740 mobile. The App Drawer listed both System Diagnostics and Notepad. Typing, multiline text, selection, native editing, keyboard focus, move/resize, minimize/restore, maximize/restore, Refresh Desktop, close/reopen, restart, task-strip behavior, and responsive active-window presentation worked without clipping or horizontal overflow. Right-click inside the editor retained the native browser context menu. Existing M3 Phase 1 and System Diagnostics workflows remained functional.
+
+Reduced-motion behavior remained covered by the existing automated Playwright workflow; manual reduced-motion verification was not performed for this checkpoint.
+
+## M3/M4 Leakage Audit
+
+Notepad introduces no Save, Save As, Open, file picker, file path, file/folder model, virtual filesystem, local or browser storage, cookies, URL state, backend call, shared file state, or other persistence behavior. Text exists only for the running application instance.
+
+## Remaining M3 Work
+
+Milestone 3 is not complete. Calculator and Clock remain unimplemented. Broader M3 integration, final accessibility/manual acceptance, the final M3 quality-gate audit, and M3 documentation/milestone closure also remain outstanding.
