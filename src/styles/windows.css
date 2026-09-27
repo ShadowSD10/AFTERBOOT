@@ -31,6 +31,11 @@
   animation: desktop-enter 350ms ease-out both;
 }
 
+.desktop-shell__workspace:focus-visible {
+  outline: 1px solid var(--color-signal);
+  outline-offset: -3px;
+}
+
 .desktop-shell__identity {
   position: absolute;
   z-index: 0;
@@ -193,12 +198,7 @@
   overflow-x: auto;
 }
 
-.application-launcher__label {
-  color: var(--color-signal);
-  font-size: 0.65rem;
-}
-
-.application-launcher__button,
+.application-drawer__trigger,
 .window-task-strip__button,
 .diagnostics-app__action {
   min-height: 2.5rem;
@@ -208,6 +208,157 @@
   color: var(--color-ink);
   background: var(--color-panel);
   cursor: pointer;
+}
+
+.application-drawer__trigger {
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--color-ink);
+  text-transform: uppercase;
+}
+
+.application-drawer__trigger::before {
+  width: 0.75rem;
+  height: 0.75rem;
+  border: 1px solid var(--color-signal);
+  background:
+    linear-gradient(90deg, transparent 42%, var(--color-signal) 42% 58%, transparent 58%),
+    linear-gradient(transparent 42%, var(--color-signal) 42% 58%, transparent 58%);
+  content: "";
+}
+
+.application-drawer,
+.desktop-context-menu {
+  z-index: 1000;
+  border: 1px solid var(--color-rule-strong);
+  color: var(--color-ink);
+  background: #0c1214;
+  box-shadow: 0 1.5rem 4rem rgb(0 0 0 / 65%);
+}
+
+.application-drawer[hidden],
+.desktop-context-menu[hidden] {
+  display: none;
+}
+
+.application-drawer {
+  position: absolute;
+  bottom: 5rem;
+  left: 1rem;
+  display: grid;
+  width: min(28rem, calc(100% - 2rem));
+  max-height: min(70vh, 34rem);
+  grid-template-rows: auto minmax(0, 1fr);
+  border-left: 3px solid var(--color-signal);
+}
+
+.application-drawer__header {
+  padding: 1rem 1.1rem 0.9rem;
+  border-bottom: 1px solid var(--color-rule);
+  background:
+    linear-gradient(110deg, rgb(143 240 189 / 9%), transparent 60%), var(--color-panel-raised);
+}
+
+.application-drawer__eyebrow {
+  color: var(--color-signal);
+  font-size: 0.62rem;
+}
+
+.application-drawer__title {
+  margin: 0.2rem 0 0;
+  font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+  font-size: 2rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.application-drawer__list {
+  display: grid;
+  gap: 1px;
+  min-height: 0;
+  padding: 0.5rem;
+  overflow-y: auto;
+  background: var(--color-rule);
+}
+
+.application-drawer__entry {
+  display: grid;
+  grid-template-columns: 2.75rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+  padding: 0.7rem;
+  border: 0;
+  border-radius: 0;
+  color: var(--color-ink);
+  background: var(--color-panel);
+  text-align: left;
+  cursor: pointer;
+}
+
+.application-drawer__entry:hover,
+.application-drawer__entry:focus-visible {
+  background: var(--color-panel-raised);
+}
+
+.application-drawer__marker {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  border: 1px solid var(--color-signal);
+  color: var(--color-signal);
+  font-size: 0.72rem;
+}
+
+.application-drawer__copy {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.application-drawer__name {
+  overflow: hidden;
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.application-drawer__description {
+  overflow: hidden;
+  color: var(--color-muted);
+  font-size: 0.67rem;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.desktop-context-menu {
+  position: fixed;
+  display: grid;
+  width: min(15rem, calc(100vw - 1rem));
+  padding: 0.35rem;
+  border-top: 2px solid var(--color-signal);
+}
+
+.desktop-context-menu__item {
+  min-height: 2.4rem;
+  padding: 0.55rem 0.7rem;
+  border: 0;
+  border-radius: 0;
+  color: var(--color-ink);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.desktop-context-menu__item:hover,
+.desktop-context-menu__item:focus-visible {
+  background: var(--color-panel-raised);
 }
 
 .window-task-strip__button {
@@ -340,6 +491,18 @@
 
   .application-launcher {
     grid-column: 1;
+  }
+
+  .application-drawer {
+    right: 0.75rem;
+    bottom: 7.5rem;
+    left: 0.75rem;
+    width: auto;
+    max-height: min(62vh, 30rem);
+  }
+
+  .application-drawer__description {
+    white-space: normal;
   }
 
   .window-task-strip {

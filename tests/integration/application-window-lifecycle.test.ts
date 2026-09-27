@@ -8,6 +8,35 @@ import { WindowManager } from "../../src/shell/windows/window-manager";
 import { FakeIdGenerator } from "../helpers/fake-id-generator";
 
 describe("application and window lifecycle", () => {
+  it("launches the registry catalog through the manager without duplicating an instance", () => {
+    const applicationId = toApplicationId("system.diagnostics");
+    const registry = new ApplicationRegistry([
+      {
+        manifest: {
+          id: applicationId,
+          name: "System Diagnostics",
+          description: "Inspect the M2 application contract.",
+          window: { title: "System Diagnostics" },
+        },
+        create: () => ({
+          primaryView: { mount: () => () => undefined },
+          dispose: () => undefined,
+        }),
+      },
+    ]);
+    const ids = new FakeIdGenerator();
+    const windows = new WindowManager(ids, { x: 0, y: 0, width: 1000, height: 700 });
+    const applications = new ApplicationManager(registry, windows, ids);
+    const installedApplicationId = registry.list()[0]!.id;
+
+    expect(windows.snapshot.windows).toEqual([]);
+    const instanceId = applications.launch(installedApplicationId);
+
+    expect(applications.launch(installedApplicationId)).toBe(instanceId);
+    expect(applications.snapshot.instances).toHaveLength(1);
+    expect(windows.snapshot.windows).toHaveLength(1);
+  });
+
   it("coordinates startup registration, launch, multiple windows, relaunch, and close", () => {
     const applicationId = toApplicationId("system.diagnostics");
     const dispose = vi.fn();
