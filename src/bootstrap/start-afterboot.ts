@@ -2,6 +2,7 @@ import { ShadowRuntime, type BootStageDurations } from "../core/runtime/shadow-r
 import { SequentialIdGenerator } from "../core/identity/identifiers";
 import { ApplicationRegistry } from "../applications/framework/application-registry";
 import { ApplicationManager } from "../applications/framework/application-manager";
+import { createCalculatorDefinition } from "../applications/built-in/calculator";
 import { createNotepadDefinition } from "../applications/built-in/notepad";
 import { createSystemDiagnosticsDefinition } from "../applications/built-in/system-diagnostics";
 import { BrowserClock } from "../platform/browser-clock";
@@ -55,6 +56,7 @@ export function startAfterboot(document: Document, browserWindow: Window): After
   const registry = new ApplicationRegistry([
     createSystemDiagnosticsDefinition(),
     createNotepadDefinition(),
+    createCalculatorDefinition(),
   ]);
   const applicationManager = new ApplicationManager(registry, windowManager, ids);
   const disposeRuntimeServices = runtime.onStateChanged((event) => {

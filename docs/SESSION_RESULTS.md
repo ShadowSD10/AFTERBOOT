@@ -1172,3 +1172,64 @@ Notepad introduces no Save, Save As, Open, file picker, file path, file/folder m
 ## Remaining M3 Work
 
 Milestone 3 is not complete. Calculator and Clock remain unimplemented. Broader M3 integration, final accessibility/manual acceptance, the final M3 quality-gate audit, and M3 documentation/milestone closure also remain outstanding.
+
+---
+
+# M3 Phase 2B — Calculator Implementation
+
+- **Date:** 2026-09-28
+- **Branch:** `feature/m3-applications-os-experience`
+- **Checkpoint status:** Calculator implemented and manually verified; Milestone 3 remains in progress
+
+## Scope Implemented
+
+- Added Calculator as a startup-registered application discovered through the existing App Drawer.
+- Added a compact four-operation SHADOW OS interface with semantic digit, decimal, operator, clear, backspace, and equals buttons.
+- Added direct keyboard input for digits, decimal, `+`, `-`, `*`, `/`, `Enter`, `=`, `Escape`, `C`, `Backspace`, and `Delete` while preserving native Tab navigation.
+- Added accessible button names, a live labeled display, visible keyboard focus, and a concise visible `ERROR` state.
+- Preserved state while the single running instance is focused, moved, resized, minimized, restored, maximized, or reconciled through Refresh Desktop.
+- Discarded calculations when Calculator closes or SHADOW OS restarts; reopening creates a fresh instance displaying zero.
+
+## Architecture
+
+- `ApplicationRegistry` remains the sole application catalog, and `ApplicationManager` remains the launch/lifecycle authority.
+- Calculator uses the existing `ApplicationView.mount(host, document)` contract and single-instance application policy.
+- `WindowManager` remains the sole owner of Calculator window geometry, mode, focus, and z-order.
+- Arithmetic state is owned by a pure DOM-independent `CalculatorModel` created for each running application instance.
+- The existing Clock abstraction, framework contracts, application context, global services, shell projections, and dependency graph remain unchanged.
+
+## State-Machine Decisions
+
+- Operations execute immediately from left to right, matching a conventional pocket calculator rather than expression precedence. For example, `12 + 5 × 2` produces `34`.
+- Choosing another operator before entering the right operand replaces the pending operator.
+- Repeated equals reapplies the last completed operator and right operand.
+- Division by zero and non-finite arithmetic enter `ERROR`; Clear or a new numeric entry recovers deterministically.
+- Direct entry is limited to 12 characters. Results are normalized to 12 significant digits and use compact scientific notation when needed to stay within a 16-character display budget.
+- No evaluated expression string, parser, calculation history, memory, percentage, or scientific operation was introduced.
+
+## Tests Added
+
+- Sixteen pure-model tests cover initial state, digit and multi-digit entry, decimals, all four operations, immediate chained evaluation, equals, clear, backspace, negative results, division by zero, operator replacement, repeated equals, malformed decimal prevention, bounded large-number formatting, recovery, and disposal.
+- Service integration covers Calculator registration, manager-backed launch, window title, single-instance relaunch, close/fresh reopen identity, and reset cleanup.
+- Playwright covers drawer discovery, launch, initial focus, task-strip projection, pointer addition/subtraction/multiplication/division, decimal arithmetic, clear, backspace, visible error and recovery, keyboard input, Escape handling, single-instance restore, close/fresh reopen, restart cleanup, and mobile containment.
+
+## Verification
+
+- Prettier: PASS
+- Strict TypeScript: PASS
+- ESLint: PASS
+- Vitest: 58 tests PASS across 11 files
+- Production build: PASS
+- Playwright Chromium: 20 tests PASS
+
+Manual verification passed at 1280 × 800 desktop and 360 × 740 mobile. App Drawer launch, pointer and keyboard arithmetic, decimals, division by zero, clear, backspace, initial focus, task-strip behavior, move/resize, minimize/restore, maximize/restore, existing-instance focus, Refresh Desktop retention, close/fresh reopen, restart cleanup, and responsive containment worked without clipping or horizontal overflow. Existing Notes editing, System Diagnostics, the desktop context menu, and Refresh Desktop remained functional with no console errors, page errors, or failed requests.
+
+Reduced-motion behavior remains covered by the existing automated Playwright workflow; manual reduced-motion verification was not performed for this checkpoint.
+
+## M3/M4 Leakage Audit
+
+Calculator introduces no filesystem or file model, persistence, `localStorage`, IndexedDB, cookies, backend or network call, shared file state, new global service, external dependency, advanced expression parser, history, memory, Settings, Browser, Clock implementation, or M4 process behavior. Calculator state exists only for the running application instance.
+
+## Remaining M3 Work
+
+Milestone 3 is not complete. Clock remains unimplemented. Broader M3 integration, final accessibility/manual acceptance, the final M3 quality-gate audit, and M3 documentation/milestone closure also remain outstanding.

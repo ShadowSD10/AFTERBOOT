@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  CALCULATOR_APPLICATION_ID,
+  createCalculatorDefinition,
+} from "../../src/applications/built-in/calculator";
+import {
   createNotepadDefinition,
   NOTEPAD_APPLICATION_ID,
 } from "../../src/applications/built-in/notepad";
@@ -12,6 +16,36 @@ import { WindowManager } from "../../src/shell/windows/window-manager";
 import { FakeIdGenerator } from "../helpers/fake-id-generator";
 
 describe("application and window lifecycle", () => {
+  it("registers Calculator and gives closed or reset launches fresh instances", () => {
+    const registry = new ApplicationRegistry([createCalculatorDefinition()]);
+    const ids = new FakeIdGenerator();
+    const windows = new WindowManager(ids, { x: 0, y: 0, width: 1000, height: 700 });
+    const applications = new ApplicationManager(registry, windows, ids);
+
+    expect(registry.list().map((manifest) => manifest.name)).toEqual(["Calculator"]);
+
+    const firstInstanceId = applications.launch(CALCULATOR_APPLICATION_ID);
+    const firstWindowId = applications.snapshot.instances[0]!.primaryWindowId;
+
+    expect(applications.launch(CALCULATOR_APPLICATION_ID)).toBe(firstInstanceId);
+    expect(applications.snapshot.instances).toHaveLength(1);
+    expect(windows.snapshot.windows[0]).toMatchObject({
+      id: firstWindowId,
+      title: "Calculator",
+    });
+
+    expect(applications.closeWindow(firstWindowId)).toBe(true);
+    expect(applications.snapshot.instances).toEqual([]);
+    expect(windows.snapshot.windows).toEqual([]);
+
+    const secondInstanceId = applications.launch(CALCULATOR_APPLICATION_ID);
+    expect(secondInstanceId).not.toBe(firstInstanceId);
+
+    applications.reset();
+    expect(applications.snapshot.instances).toEqual([]);
+    expect(windows.snapshot.windows).toEqual([]);
+  });
+
   it("registers Notepad and gives each closed or reset lifecycle a fresh instance", () => {
     const registry = new ApplicationRegistry([createNotepadDefinition()]);
     const ids = new FakeIdGenerator();
