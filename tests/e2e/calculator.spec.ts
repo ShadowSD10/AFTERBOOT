@@ -26,7 +26,14 @@ async function launchCalculator(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Applications" }).click();
   const drawer = page.getByRole("dialog", { name: "Applications" });
   const calculatorEntry = drawer.getByRole("button", { name: "Calculator" });
+  const marker = calculatorEntry.locator(".application-drawer__marker");
+  const icon = marker.locator("svg.application-drawer__calculator-icon");
   await expect(calculatorEntry).toBeVisible();
+  await expect(marker).toHaveAttribute("aria-hidden", "true");
+  await expect(marker).toBeEmpty();
+  await expect(icon).toBeVisible();
+  await expect(icon).toHaveAttribute("viewBox", "0 0 32 32");
+  await expect(icon).toHaveAttribute("aria-hidden", "true");
   await calculatorEntry.click();
   await expect(page.getByRole("dialog", { name: "Calculator" })).toBeVisible();
 }

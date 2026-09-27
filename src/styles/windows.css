@@ -360,6 +360,28 @@
   fill: rgb(16 23 25);
 }
 
+.application-drawer__calculator-icon {
+  width: 2.35rem;
+  height: 2.35rem;
+  stroke: currentColor;
+  stroke-width: 1.35;
+  stroke-linejoin: miter;
+}
+
+.application-drawer__calculator-body {
+  fill: currentColor;
+  fill-opacity: 0.04;
+}
+
+.application-drawer__calculator-display {
+  fill: rgb(16 23 25);
+}
+
+.application-drawer__calculator-keys {
+  fill: currentColor;
+  stroke: none;
+}
+
 .application-drawer__copy {
   display: grid;
   gap: 0;

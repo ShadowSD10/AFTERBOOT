@@ -123,6 +123,8 @@ export class ApplicationDrawerView {
     marker.setAttribute("aria-hidden", "true");
     if (manifest.name === "Notes") {
       marker.append(createNotesIcon(this.#document));
+    } else if (manifest.name === "Calculator") {
+      marker.append(createCalculatorIcon(this.#document));
     } else {
       marker.textContent = markerFor(manifest.name);
     }
@@ -263,5 +265,38 @@ function createNotesIcon(document: Document): SVGSVGElement {
   pencil.setAttribute("d", "m16 26.5 1-4 8-8 3.5 3.5-8 8z M24 15.5l3.5 3.5 M17 22.5l3.5 3.5");
 
   icon.append(page, pencil);
+  return icon;
+}
+
+function createCalculatorIcon(document: Document): SVGSVGElement {
+  const icon = document.createElementNS(SVG_NAMESPACE, "svg");
+  icon.classList.add("application-drawer__calculator-icon");
+  icon.setAttribute("viewBox", "0 0 32 32");
+  icon.setAttribute("fill", "none");
+  icon.setAttribute("aria-hidden", "true");
+  icon.setAttribute("focusable", "false");
+
+  const body = document.createElementNS(SVG_NAMESPACE, "rect");
+  body.classList.add("application-drawer__calculator-body");
+  body.setAttribute("x", "6");
+  body.setAttribute("y", "3.5");
+  body.setAttribute("width", "20");
+  body.setAttribute("height", "25");
+
+  const display = document.createElementNS(SVG_NAMESPACE, "rect");
+  display.classList.add("application-drawer__calculator-display");
+  display.setAttribute("x", "9");
+  display.setAttribute("y", "7");
+  display.setAttribute("width", "14");
+  display.setAttribute("height", "5.5");
+
+  const keys = document.createElementNS(SVG_NAMESPACE, "path");
+  keys.classList.add("application-drawer__calculator-keys");
+  keys.setAttribute(
+    "d",
+    "M9 16h3v3H9z M14.5 16h3v3h-3z M20 16h3v3h-3z M9 21.5h3v3H9z M14.5 21.5h3v3h-3z M20 21.5h3v3h-3z",
+  );
+
+  icon.append(body, display, keys);
   return icon;
 }
