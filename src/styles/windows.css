@@ -703,6 +703,52 @@
   grid-column: span 2;
 }
 
+.clock-app {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: 1rem;
+  place-items: center;
+  overflow: hidden;
+  background:
+    linear-gradient(rgb(143 240 189 / 3%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(143 240 189 / 3%) 1px, transparent 1px), #0c1214;
+  background-size: 1.5rem 1.5rem;
+}
+
+.clock-app__face {
+  display: grid;
+  width: min(100%, 28rem);
+  gap: 1rem;
+  padding: 1.35rem 1rem;
+  border-block: 1px solid var(--color-rule-strong);
+  justify-items: center;
+  background: rgb(8 11 12 / 72%);
+  text-align: center;
+}
+
+.clock-app__time,
+.clock-app__date {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.clock-app__time {
+  color: var(--color-signal);
+  font-size: 3rem;
+}
+
+.clock-app__date {
+  color: var(--color-muted);
+  font-size: 0.78rem;
+}
+
 @media (max-width: 44rem) {
   .desktop-shell {
     min-height: 28rem;

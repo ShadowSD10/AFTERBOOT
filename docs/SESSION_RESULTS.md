@@ -1233,3 +1233,61 @@ Calculator introduces no filesystem or file model, persistence, `localStorage`, 
 ## Remaining M3 Work
 
 Milestone 3 is not complete. Clock remains unimplemented. Broader M3 integration, final accessibility/manual acceptance, the final M3 quality-gate audit, and M3 documentation/milestone closure also remain outstanding.
+
+---
+
+# M3 Phase 2C — Clock Implementation
+
+- **Date:** 2026-09-28
+- **Branch:** `feature/m3-applications-os-experience`
+- **Checkpoint status:** Clock implemented and manually verified; Milestone 3 remains in progress
+
+## Scope Implemented
+
+- Added Clock as a startup-registered application discovered through the existing App Drawer.
+- Added a compact SHADOW OS digital clock view with dominant 24-hour time including seconds and a secondary local date.
+- Added semantic time/date elements with explicit accessible names and machine-readable values.
+- Preserved the live display while the single running instance is focused, moved, resized, minimized, restored, maximized, or reconciled through Refresh Desktop.
+- Stopped application-owned updates on close/reset and created one fresh update lifecycle when Clock reopened.
+
+## Existing Clock Integration
+
+- The composition root injects the existing M1 `Clock` into `createClockDefinition(clock)`; `ApplicationContext` and global runtime contracts remain unchanged.
+- An instance-local `ClockModel` reads only `Clock.now()`, schedules only through `Clock.schedule()`, and reuses the existing pure `formatSystemTime` presentation convention.
+- Clock uses the existing `ApplicationView.mount(host, document)` contract, registry catalog, manager single-instance policy, and WindowManager geometry/focus lifecycle.
+- The application contains no direct `Date.now()`, `new Date()`, browser timer source, or second clock service.
+
+## Update and Disposal Behavior
+
+- The model aligns each update to the next whole-second boundary and keeps at most one scheduled callback while subscribed.
+- Multiple subscribers share that single scheduled callback.
+- Final unsubscribe and instance disposal both cancel the pending callback idempotently.
+- Closing Clock returns browser timer activity to its pre-launch baseline; relaunch adds exactly one fresh Clock timer rather than accumulating callbacks.
+- Restart/reset disposes the running instance and leaves no Clock window, task entry, subscription, or scheduled application update.
+
+## Tests Added
+
+- Six deterministic model tests cover fixed injected formatting, second-boundary alignment, repeated ticking, local midnight rollover, one-task sharing, final-unsubscribe cancellation, disposal, rejected post-disposal subscriptions, and reopen without timer accumulation.
+- Service integration covers Clock registration, manager-backed launch, window title, single-instance relaunch, close/fresh reopen identity, and reset cleanup.
+- Playwright covers drawer discovery, launch, accessible time/date values, live updates without fixed wall-clock assumptions, task-strip projection, single-instance relaunch, minimize/restore, close/reopen, browser timer-count cleanup, restart disposal, mobile active-window containment, and horizontal-overflow prevention.
+
+## Verification
+
+- Prettier: PASS
+- Strict TypeScript: PASS
+- ESLint: PASS
+- Vitest: 71 tests PASS across 12 files
+- Production build: PASS
+- Playwright Chromium: 23 tests PASS
+
+Manual verification passed at 1280 × 800, 1024 × 768, 768 × 720, and 360 × 740. App Drawer launch, synchronized application/system time, local date, visible ticking, initial focus, task-strip behavior, move/resize, minimize/restore, maximize/restore, existing-instance focus, Refresh Desktop retention, close/fresh reopen, restart cleanup, and responsive containment worked without clipping or horizontal overflow. Existing Notes editing, Calculator pointer/keyboard arithmetic, System Diagnostics, the desktop context menu, Refresh Desktop, and window controls remained functional with no observed browser errors.
+
+Reduced-motion behavior remains covered by the existing automated Playwright workflow; manual reduced-motion verification was not performed for this checkpoint.
+
+## M3/M4 Leakage Audit
+
+Clock introduces no filesystem or file model, persistence, `localStorage`, IndexedDB, cookies, backend or network call, shared state service, global ticking service, external dependency, Calendar behavior, timezone configuration, user setting, alarm, timer, stopwatch, world clock, weather, or M4 process behavior. Its only time source is the existing injected OS `Clock`.
+
+## Remaining M3 Work
+
+Milestone 3 is not complete. Broader M3 integration, final accessibility/manual acceptance, the final M3 quality-gate audit, and M3 documentation/milestone closure remain outstanding. No final integration or closure work was started in this phase.
