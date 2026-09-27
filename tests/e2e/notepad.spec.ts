@@ -27,9 +27,13 @@ async function launchNotepad(page: Page): Promise<void> {
   const drawer = page.getByRole("dialog", { name: "Applications" });
   const notesEntry = drawer.getByRole("button", { name: "Notes" });
   const marker = notesEntry.locator(".application-drawer__marker");
+  const icon = marker.locator("svg.application-drawer__notes-icon");
   await expect(notesEntry).toBeVisible();
-  await expect(marker).toHaveText("✎");
   await expect(marker).toHaveAttribute("aria-hidden", "true");
+  await expect(marker).toBeEmpty();
+  await expect(icon).toBeVisible();
+  await expect(icon).toHaveAttribute("viewBox", "0 0 32 32");
+  await expect(icon).toHaveAttribute("aria-hidden", "true");
   await notesEntry.click();
   await expect(page.getByRole("dialog", { name: "Notes" })).toBeVisible();
 }

@@ -6,6 +6,7 @@ import { toApplicationId } from "../../core/identity/identifiers";
 
 const DRAWER_ID = "application-drawer";
 const DRAWER_TITLE_ID = "application-drawer-title";
+const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 
 export class ApplicationDrawerView {
   readonly trigger: HTMLButtonElement;
@@ -119,8 +120,12 @@ export class ApplicationDrawerView {
 
     const marker = this.#document.createElement("span");
     marker.className = "application-drawer__marker";
-    marker.textContent = markerFor(manifest.name);
     marker.setAttribute("aria-hidden", "true");
+    if (manifest.name === "Notes") {
+      marker.append(createNotesIcon(this.#document));
+    } else {
+      marker.textContent = markerFor(manifest.name);
+    }
     const copy = this.#document.createElement("span");
     copy.className = "application-drawer__copy";
     const name = this.#document.createElement("span");
@@ -232,10 +237,6 @@ export class ApplicationDrawerView {
 }
 
 function markerFor(name: string): string {
-  if (name === "Notes") {
-    return "✎";
-  }
-
   const marker = name
     .trim()
     .split(/\s+/)
@@ -243,4 +244,24 @@ function markerFor(name: string): string {
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
   return marker || "APP";
+}
+
+function createNotesIcon(document: Document): SVGSVGElement {
+  const icon = document.createElementNS(SVG_NAMESPACE, "svg");
+  icon.classList.add("application-drawer__notes-icon");
+  icon.setAttribute("viewBox", "0 0 32 32");
+  icon.setAttribute("fill", "none");
+  icon.setAttribute("aria-hidden", "true");
+  icon.setAttribute("focusable", "false");
+
+  const page = document.createElementNS(SVG_NAMESPACE, "path");
+  page.classList.add("application-drawer__notes-page");
+  page.setAttribute("d", "M7 4.5h12l6 6v17H7z M19 4.5v6h6 M11 15h10 M11 19h8 M11 23h4");
+
+  const pencil = document.createElementNS(SVG_NAMESPACE, "path");
+  pencil.classList.add("application-drawer__notes-pencil");
+  pencil.setAttribute("d", "m16 26.5 1-4 8-8 3.5 3.5-8 8z M24 15.5l3.5 3.5 M17 22.5l3.5 3.5");
+
+  icon.append(page, pencil);
+  return icon;
 }

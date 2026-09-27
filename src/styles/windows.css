@@ -342,6 +342,24 @@
   font-size: 0.75rem;
 }
 
+.application-drawer__notes-icon {
+  width: 2.35rem;
+  height: 2.35rem;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+}
+
+.application-drawer__notes-page {
+  fill: currentColor;
+  fill-opacity: 0.04;
+}
+
+.application-drawer__notes-pencil {
+  fill: rgb(16 23 25);
+}
+
 .application-drawer__copy {
   display: grid;
   gap: 0;
