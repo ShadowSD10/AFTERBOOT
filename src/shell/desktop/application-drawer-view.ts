@@ -43,7 +43,7 @@ export class ApplicationDrawerView {
     header.className = "application-drawer__header";
     const eyebrow = document.createElement("span");
     eyebrow.className = "application-drawer__eyebrow";
-    eyebrow.textContent = "SHADOW OS / INSTALLED";
+    eyebrow.textContent = "SHADOW OS /";
     const title = document.createElement("h2");
     title.id = DRAWER_TITLE_ID;
     title.className = "application-drawer__title";

@@ -89,7 +89,7 @@ test("provides a scoped keyboard-accessible desktop context menu", async ({ page
   await page.keyboard.press("Shift+F10");
   await expect(menu).toBeVisible();
   await page.keyboard.press("ArrowDown");
-  await expect(menu.getByRole("menuitem", { name: "Open App Drawer" })).toBeFocused();
+  await expect(menu.getByRole("menuitem", { name: "Applications" })).toBeFocused();
   await page.keyboard.press("Enter");
   const drawer = page.getByRole("dialog", { name: "Applications" });
   await expect(drawer).toBeVisible();

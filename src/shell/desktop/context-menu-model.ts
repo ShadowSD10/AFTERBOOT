@@ -3,6 +3,7 @@ export type DesktopContextMenuActionId = "refresh-desktop" | "open-application-d
 export interface ContextMenuItem {
   readonly id: DesktopContextMenuActionId;
   readonly label: string;
+  readonly symbol: string;
 }
 
 export interface OverlayPoint {

@@ -89,7 +89,13 @@ export class ContextMenuView {
     button.tabIndex = -1;
     button.dataset.contextAction = item.id;
     button.setAttribute("role", "menuitem");
-    button.textContent = item.label;
+    const label = this.#document.createElement("span");
+    label.textContent = item.label;
+    const symbol = this.#document.createElement("span");
+    symbol.className = "desktop-context-menu__symbol";
+    symbol.textContent = item.symbol;
+    symbol.setAttribute("aria-hidden", "true");
+    button.append(label, symbol);
     return button;
   }
 

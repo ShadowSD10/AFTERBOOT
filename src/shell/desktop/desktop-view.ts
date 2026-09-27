@@ -85,8 +85,8 @@ export class DesktopView {
       document,
       browserWindow,
       [
-        { id: "refresh-desktop", label: "Refresh Desktop" },
-        { id: "open-application-drawer", label: "Open App Drawer" },
+        { id: "refresh-desktop", label: "Refresh Desktop", symbol: "↻" },
+        { id: "open-application-drawer", label: "Applications", symbol: "◇" },
       ],
       this.#handleContextAction,
     );
